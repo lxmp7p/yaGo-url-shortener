@@ -1,3 +1,3 @@
 module github.com/lxmp7p/yaGo-url-shortener
 
-go 1.25
+go 1.24
