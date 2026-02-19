@@ -8,11 +8,11 @@ import (
 
 func Handler(res http.ResponseWriter, req *http.Request) {
 	if req.Method == http.MethodGet {
-		service.GetOriginalUrl(res, req)
+		service.GetOriginalURL(res, req)
 		return
 	}
 	if req.Method == http.MethodPost {
-		service.GetShortUrl(res, req)
+		service.GetShortURL(res, req)
 		return
 	}
 

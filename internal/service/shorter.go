@@ -16,33 +16,33 @@ var urlCache = make(map[string]string)
 var chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
 func Shortenner() string {
-	var randUrl string
+	var randURL string
 	for {
-		var shortUrl string
+		var shortURL string
 		for range 8 {
-			shortUrl += string(chars[rand.Intn(len(chars))])
+			shortURL += string(chars[rand.Intn(len(chars))])
 		}
-		_, exist := urlCache[shortUrl]
+		_, exist := urlCache[shortURL]
 		if !exist {
-			randUrl = shortUrl
+			randURL = shortURL
 			break
 		}
 	}
-	return randUrl
+	return randURL
 }
 
-func GetOriginalUrl(res http.ResponseWriter, req *http.Request) {
-	shortUrl := req.URL.Path[1:]
-	originalUrl, exist := urlCache[shortUrl]
+func GetOriginalURL(res http.ResponseWriter, req *http.Request) {
+	shortURL := req.URL.Path[1:]
+	originalURL, exist := urlCache[shortURL]
 	if !exist {
 		http.Error(res, "URL not found", http.StatusNotFound)
 		return
 	}
-	res.Header().Set("Location", originalUrl)
+	res.Header().Set("Location", originalURL)
 	res.WriteHeader(http.StatusTemporaryRedirect)
 }
 
-func GetShortUrl(res http.ResponseWriter, req *http.Request) {
+func GetShortURL(res http.ResponseWriter, req *http.Request) {
 	contentType := req.Header.Get(ContentTypeHeader)
 	if !strings.Contains(strings.ToLower(contentType), TextContentType) {
 		http.Error(res, "method not allowed", http.StatusUnsupportedMediaType)
@@ -56,13 +56,13 @@ func GetShortUrl(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	originalUrl := string(body)
-	shortUrl := Shortenner()
-	urlCache[shortUrl] = originalUrl
+	originalURL := string(body)
+	shortURL := Shortenner()
+	urlCache[shortURL] = originalURL
 
 	res.Header().Set(ContentTypeHeader, TextContentType)
 	res.WriteHeader(http.StatusCreated)
 
-	result := "http" + "://" + req.Host + "/" + shortUrl
+	result := "http" + "://" + req.Host + "/" + shortURL
 	res.Write([]byte(result))
 }
