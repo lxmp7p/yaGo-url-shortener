@@ -1,20 +1,11 @@
 package handler
 
 import (
-	"net/http"
-
-	"github.com/lxmp7p/yaGo-url-shortener/internal/service"
+	"github.com/go-chi/chi/v5"
 )
 
-func Handler(res http.ResponseWriter, req *http.Request) {
-	if req.Method == http.MethodGet {
-		service.GetOriginalURL(res, req)
-		return
-	}
-	if req.Method == http.MethodPost {
-		service.GetShortURL(res, req)
-		return
-	}
-
-	http.Error(res, "method not allowed", http.StatusMethodNotAllowed)
+func InitRoutes() chi.Router {
+	apiRouter := chi.NewRouter()
+	apiRouter.Mount("/", Routes())
+	return apiRouter
 }

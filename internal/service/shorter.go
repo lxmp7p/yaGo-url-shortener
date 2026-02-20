@@ -1,10 +1,13 @@
 package service
 
 import (
+	"fmt"
 	"io"
 	"math/rand"
 	"net/http"
 	"strings"
+
+	"github.com/go-chi/chi/v5"
 )
 
 const (
@@ -32,13 +35,14 @@ func Shortenner() string {
 }
 
 func GetOriginalURL(res http.ResponseWriter, req *http.Request) {
-	shortURL := req.URL.Path[1:]
+	shortURL := chi.URLParam(req, "short_url")
 	originalURL, exist := urlCache[shortURL]
 	if !exist {
 		http.Error(res, "URL not found", http.StatusNotFound)
 		return
 	}
 	res.Header().Set("Location", originalURL)
+	fmt.Println(originalURL)
 	res.WriteHeader(http.StatusTemporaryRedirect)
 }
 

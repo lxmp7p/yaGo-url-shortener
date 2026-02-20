@@ -7,10 +7,6 @@ import (
 )
 
 func main() {
-	http.HandleFunc(`/`, handler.Handler)
-
-	err := http.ListenAndServe(`:8080`, nil)
-	if err != nil {
-		panic(err)
-	}
+	r := handler.InitRoutes()
+	http.ListenAndServe(":8080", r)
 }
