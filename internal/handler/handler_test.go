@@ -16,7 +16,7 @@ import (
 )
 
 var tmpURL string
-var templateURL = "http://example.com/"
+var templateURL = "http://localhost:8080/"
 
 func TestGetShortURLHandler(t *testing.T) {
 	type want struct {
@@ -33,7 +33,7 @@ func TestGetShortURLHandler(t *testing.T) {
 		want        want
 	}{
 		{
-			name:        "negative test #1",
+			name:        "negative test #1 POST",
 			method:      http.MethodPost,
 			path:        "/",
 			body:        bytes.NewReader([]byte("yandex.ru")),
@@ -45,7 +45,7 @@ func TestGetShortURLHandler(t *testing.T) {
 			},
 		},
 		{
-			name:        "positive test #1",
+			name:        "positive test #1 POST",
 			method:      http.MethodPost,
 			path:        "/",
 			body:        bytes.NewReader([]byte("yandex.ru")),
