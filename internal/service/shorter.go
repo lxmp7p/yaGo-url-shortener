@@ -1,7 +1,6 @@
 package service
 
 import (
-	"fmt"
 	"io"
 	"math/rand"
 	"net/http"
@@ -47,7 +46,6 @@ func (s *ShortenerService) GetOriginalURL(res http.ResponseWriter, req *http.Req
 		return
 	}
 	res.Header().Set("Location", originalURL)
-	fmt.Println(originalURL)
 	res.WriteHeader(http.StatusTemporaryRedirect)
 }
 
@@ -72,6 +70,6 @@ func (s *ShortenerService) GetShortURL(res http.ResponseWriter, req *http.Reques
 	res.Header().Set(ContentTypeHeader, TextContentType)
 	res.WriteHeader(http.StatusCreated)
 
-	result := "http" + "://" + req.Host + "/" + shortURL
+	result := s.Config.ResultAddr + "/" + shortURL
 	res.Write([]byte(result))
 }

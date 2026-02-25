@@ -12,6 +12,9 @@ func main() {
 	if err != nil {
 		panic("failed init config")
 	}
-	r := handler.InitRoutes(handler.App{})
+
+	r := handler.InitRoutes(handler.App{
+		Config: cfg,
+	})
 	http.ListenAndServe(cfg.Addr, r)
 }

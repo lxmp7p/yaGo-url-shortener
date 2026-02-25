@@ -1,6 +1,9 @@
 package config
 
-import "flag"
+import (
+	"flag"
+	"fmt"
+)
 
 type Config struct {
 	Addr       string
@@ -12,6 +15,8 @@ func InitConfig() (Config, error) {
 	resultAddr := flag.String("b", "http://localhost:8080", "server result ip:port")
 
 	flag.Parse()
+	fmt.Println(&addr)
+	fmt.Println(&resultAddr)
 
 	return Config{
 		Addr:       *addr,
