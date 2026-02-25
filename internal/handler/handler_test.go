@@ -10,6 +10,7 @@ import (
 	"path"
 	"testing"
 
+	"github.com/lxmp7p/yaGo-url-shortener/internal/config"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -80,7 +81,13 @@ func TestGetShortURLHandler(t *testing.T) {
 			)
 			request.Header.Set("Content-Type", test.contentType)
 			w := httptest.NewRecorder()
-			router := InitRoutes()
+			app := App{
+				Config: config.Config{
+					Addr:       "localhost:8080",
+					ResultAddr: "http://localhost:8080",
+				},
+			}
+			router := InitRoutes(app)
 
 			router.ServeHTTP(w, request)
 			res := w.Result()

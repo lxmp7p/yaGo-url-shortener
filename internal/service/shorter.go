@@ -8,12 +8,17 @@ import (
 	"strings"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/lxmp7p/yaGo-url-shortener/internal/config"
 )
 
 const (
 	TextContentType   = "text/plain"
 	ContentTypeHeader = "Content-Type"
 )
+
+type ShortenerService struct {
+	Config config.Config
+}
 
 var urlCache = make(map[string]string)
 var chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
@@ -34,7 +39,7 @@ func Shortenner() string {
 	return randURL
 }
 
-func GetOriginalURL(res http.ResponseWriter, req *http.Request) {
+func (s *ShortenerService) GetOriginalURL(res http.ResponseWriter, req *http.Request) {
 	shortURL := chi.URLParam(req, "short_url")
 	originalURL, exist := urlCache[shortURL]
 	if !exist {
@@ -46,7 +51,7 @@ func GetOriginalURL(res http.ResponseWriter, req *http.Request) {
 	res.WriteHeader(http.StatusTemporaryRedirect)
 }
 
-func GetShortURL(res http.ResponseWriter, req *http.Request) {
+func (s *ShortenerService) GetShortURL(res http.ResponseWriter, req *http.Request) {
 	contentType := req.Header.Get(ContentTypeHeader)
 	if !strings.Contains(strings.ToLower(contentType), TextContentType) {
 		http.Error(res, "method not allowed", http.StatusUnsupportedMediaType)
