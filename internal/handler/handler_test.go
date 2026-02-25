@@ -14,8 +14,8 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-var tmpUrl string
-var templateUrl = "http://example.com/"
+var tmpURL string
+var templateURL = "http://example.com/"
 
 func TestGetShortURLHandler(t *testing.T) {
 	type want struct {
@@ -51,7 +51,7 @@ func TestGetShortURLHandler(t *testing.T) {
 			contentType: "text/plain",
 			want: want{
 				code:        201,
-				response:    templateUrl,
+				response:    templateURL,
 				contentType: "text/plain",
 			},
 		},
@@ -71,7 +71,7 @@ func TestGetShortURLHandler(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			if test.method == http.MethodGet {
-				test.path = fmt.Sprintf("/%s", tmpUrl)
+				test.path = fmt.Sprintf("/%s", tmpURL)
 			}
 			request := httptest.NewRequest(
 				test.method,
@@ -94,10 +94,10 @@ func TestGetShortURLHandler(t *testing.T) {
 			assert.Contains(t, string(resBody), test.want.response)
 			if test.method == http.MethodPost &&
 				test.want.code == 201 {
-				if assert.Contains(t, string(resBody), templateUrl) {
+				if assert.Contains(t, string(resBody), templateURL) {
 					u, err := url.Parse(string(resBody))
 					require.NoError(t, err)
-					tmpUrl = path.Base(u.Path)
+					tmpURL = path.Base(u.Path)
 				}
 			}
 			assert.Equal(t, test.want.contentType, res.Header.Get("Content-Type"))
