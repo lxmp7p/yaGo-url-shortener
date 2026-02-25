@@ -5,7 +5,7 @@ import (
 	"github.com/lxmp7p/yaGo-url-shortener/internal/service"
 )
 
-func Routes() chi.Router {
+func ShortenerRoutes() chi.Router {
 	r := chi.NewRouter()
 	r.Get("/{short_url}", service.GetOriginalURL)
 	r.Post("/", service.GetShortURL)

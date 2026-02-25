@@ -6,6 +6,6 @@ import (
 
 func InitRoutes() chi.Router {
 	apiRouter := chi.NewRouter()
-	apiRouter.Mount("/", Routes())
+	apiRouter.Mount("/", ShortenerRoutes())
 	return apiRouter
 }
