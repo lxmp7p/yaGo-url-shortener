@@ -99,7 +99,7 @@ func TestGetShortURLHandler(t *testing.T) {
 			require.NoError(t, err)
 			assert.Contains(t, string(resBody), test.want.response)
 			if test.method == http.MethodPost &&
-				test.want.code == 201 {
+				test.want.code == http.StatusCreated {
 				if assert.Contains(t, string(resBody), templateURL) {
 					u, err := url.Parse(string(resBody))
 					require.NoError(t, err)

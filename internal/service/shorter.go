@@ -29,8 +29,8 @@ func Shortenner() string {
 		for range 8 {
 			shortURL += string(chars[rand.Intn(len(chars))])
 		}
-		_, exist := urlCache[shortURL]
-		if !exist {
+		_, ok := urlCache[shortURL]
+		if !ok {
 			randURL = shortURL
 			break
 		}
@@ -40,8 +40,8 @@ func Shortenner() string {
 
 func (s *ShortenerService) GetOriginalURL(res http.ResponseWriter, req *http.Request) {
 	shortURL := chi.URLParam(req, "short_url")
-	originalURL, exist := urlCache[shortURL]
-	if !exist {
+	originalURL, ok := urlCache[shortURL]
+	if !ok {
 		http.Error(res, "URL not found", http.StatusNotFound)
 		return
 	}

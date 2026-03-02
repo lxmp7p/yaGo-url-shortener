@@ -8,10 +8,7 @@ import (
 )
 
 func main() {
-	cfg, err := config.InitConfig()
-	if err != nil {
-		panic("failed init config")
-	}
+	cfg := config.InitConfig()
 
 	r := handler.InitRoutes(handler.App{
 		Config: cfg,
