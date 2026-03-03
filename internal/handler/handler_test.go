@@ -11,14 +11,23 @@ import (
 	"testing"
 
 	"github.com/lxmp7p/yaGo-url-shortener/internal/config"
+	"github.com/lxmp7p/yaGo-url-shortener/internal/repository"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-var tmpURL string
-var templateURL = "http://localhost:8080/"
-
 func TestGetShortURLHandler(t *testing.T) {
+	var tmpURL string
+	var templateURL = "http://localhost:8080/"
+
+	app := App{
+		Config: config.Config{
+			Addr:       "localhost:8080",
+			ResultAddr: "http://localhost:8080",
+		},
+		Storage: repository.NewCache(),
+	}
+
 	type want struct {
 		code        int
 		response    string
@@ -40,7 +49,7 @@ func TestGetShortURLHandler(t *testing.T) {
 			contentType: "biba",
 			want: want{
 				code:        415,
-				response:    "method not allowed\n",
+				response:    "Unsupported Media Type\n",
 				contentType: "text/plain; charset=utf-8",
 			},
 		},
@@ -81,12 +90,7 @@ func TestGetShortURLHandler(t *testing.T) {
 			)
 			request.Header.Set("Content-Type", test.contentType)
 			w := httptest.NewRecorder()
-			app := App{
-				Config: config.Config{
-					Addr:       "localhost:8080",
-					ResultAddr: "http://localhost:8080",
-				},
-			}
+
 			router := InitRoutes(app)
 
 			router.ServeHTTP(w, request)
