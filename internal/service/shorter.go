@@ -55,7 +55,7 @@ func (s *ShortenerService) GetShortURL(res http.ResponseWriter, req *http.Reques
 
 	var shortURL string
 	for attempt := 0; attempt < MaxShortAttempts; attempt++ {
-		shortURL = generateShortUrl()
+		shortURL = generateShortURL()
 		err = s.Storage.Save(string(body), shortURL)
 		if err != nil {
 			continue
