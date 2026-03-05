@@ -1,16 +1,14 @@
 package service
 
 import (
-	"errors"
 	"io"
-	"math/rand"
+	"log/slog"
 	"net/http"
 	"net/url"
 	"strings"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/lxmp7p/yaGo-url-shortener/internal/config"
-	"github.com/lxmp7p/yaGo-url-shortener/internal/repository"
 )
 
 const (
@@ -20,35 +18,20 @@ const (
 	Chars             = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 )
 
-type ShortenerService struct {
-	Config  config.Config
-	Storage repository.URLstorage
+type URLstorage interface {
+	Save(originalURL string, shortURL string) error
+	Get(shortURL string) (string, error)
 }
 
-func (s *ShortenerService) Shortenner() (string, error) {
-	var randURL string
-	var ok bool
-	for attempt := 0; attempt < MaxShortAttempts; attempt++ {
-		var shortURL string
-		for range 8 {
-			shortURL += string(Chars[rand.Intn(len(Chars))])
-		}
-		if !s.Storage.Exist(shortURL) {
-			randURL = shortURL
-			ok = true
-			break
-		}
-	}
-	if !ok {
-		return randURL, errors.New("failed to generate short url")
-	}
-	return randURL, nil
+type ShortenerService struct {
+	Config  config.Config
+	Storage URLstorage
 }
 
 func (s *ShortenerService) GetOriginalURL(res http.ResponseWriter, req *http.Request) {
 	shortURL := chi.URLParam(req, "short_url")
-	originalURL, ok := s.Storage.Get(shortURL)
-	if !ok {
+	originalURL, err := s.Storage.Get(shortURL)
+	if err != nil {
 		http.Error(res, http.StatusText(http.StatusNotFound), http.StatusNotFound)
 		return
 	}
@@ -70,12 +53,21 @@ func (s *ShortenerService) GetShortURL(res http.ResponseWriter, req *http.Reques
 		return
 	}
 
-	shortURL, err := s.Shortenner()
+	var shortURL string
+	for attempt := 0; attempt < MaxShortAttempts; attempt++ {
+		shortURL = generateShortUrl()
+		err = s.Storage.Save(string(body), shortURL)
+		if err != nil {
+			continue
+		}
+		break
+	}
+
 	if err != nil {
-		http.Error(res, err.Error(), http.StatusInternalServerError)
+		slog.Error(err.Error())
+		http.Error(res, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}
-	s.Storage.Save(string(body), shortURL)
 
 	res.Header().Set(ContentTypeHeader, TextContentType)
 	res.WriteHeader(http.StatusCreated)

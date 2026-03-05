@@ -1,7 +1,18 @@
 package repository
 
+import (
+	"errors"
+	"net/http"
+	"sync"
+)
+
+var (
+	ErrExist = errors.New("shortURL already exists")
+)
+
 type Cache struct {
 	URLCache map[string]string
+	mu       sync.RWMutex
 }
 
 func NewCache() *Cache {
@@ -10,16 +21,26 @@ func NewCache() *Cache {
 	}
 }
 
-func (cache *Cache) Save(originalURL, shortURL string) {
+func (cache *Cache) Save(originalURL, shortURL string) error {
+	cache.mu.Lock()
+	defer cache.mu.Unlock()
+
+	if _, exists := cache.URLCache[shortURL]; exists {
+		return ErrExist
+	}
 	cache.URLCache[shortURL] = originalURL
+
+	return nil
 }
 
-func (cache *Cache) Get(shortURL string) (string, bool) {
+func (cache *Cache) Get(shortURL string) (string, error) {
+	cache.mu.RLock()
+	defer cache.mu.RUnlock()
+
 	originalURL, ok := cache.URLCache[shortURL]
-	return originalURL, ok
-}
+	if !ok {
+		return "", errors.New(http.StatusText(http.StatusNotFound))
+	}
 
-func (cache *Cache) Exist(shortURL string) bool {
-	_, ok := cache.URLCache[shortURL]
-	return ok
+	return originalURL, nil
 }
