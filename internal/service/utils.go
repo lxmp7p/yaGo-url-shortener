@@ -2,7 +2,7 @@ package service
 
 import "math/rand"
 
-func generateShortUrl() string {
+func generateShortURL() string {
 	b := make([]byte, 8)
 	for i := range b {
 		b[i] = Chars[rand.Intn(len(Chars))]
