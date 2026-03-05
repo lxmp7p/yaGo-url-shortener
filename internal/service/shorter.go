@@ -32,6 +32,7 @@ func (s *ShortenerService) GetOriginalURL(res http.ResponseWriter, req *http.Req
 	shortURL := chi.URLParam(req, "short_url")
 	originalURL, err := s.Storage.Get(shortURL)
 	if err != nil {
+		slog.Error(err.Error())
 		http.Error(res, http.StatusText(http.StatusNotFound), http.StatusNotFound)
 		return
 	}

@@ -2,7 +2,6 @@ package repository
 
 import (
 	"errors"
-	"net/http"
 	"sync"
 )
 
@@ -39,7 +38,7 @@ func (cache *Cache) Get(shortURL string) (string, error) {
 
 	originalURL, ok := cache.URLCache[shortURL]
 	if !ok {
-		return "", errors.New(http.StatusText(http.StatusNotFound))
+		return "", errors.New("url not found")
 	}
 
 	return originalURL, nil
