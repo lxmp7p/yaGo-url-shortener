@@ -15,17 +15,22 @@ func NewConfig() Config {
 }
 
 func (cfg *Config) InitConfig() Config {
-	addr := flag.String("a", "localhost:8080", "server ip:port")
-	resultAddr := flag.String("b", "http://localhost:8080", "server result ip:port")
-
+	cfg.argsConfigurator()
 	cfg.envConfigurator()
 
+	return Config{
+		Addr:       cfg.Addr,
+		ResultAddr: cfg.ResultAddr,
+	}
+}
+
+func (cfg *Config) argsConfigurator() {
+	addr := flag.String("a", "localhost:8080", "server ip:port")
+	resultAddr := flag.String("b", "http://localhost:8080", "server result ip:port")
 	flag.Parse()
 
-	return Config{
-		Addr:       *addr,
-		ResultAddr: *resultAddr,
-	}
+	cfg.Addr = *addr
+	cfg.ResultAddr = *resultAddr
 }
 
 func (cfg *Config) envConfigurator() {
