@@ -10,22 +10,29 @@ type Config struct {
 	ResultAddr string
 }
 
-func InitConfig() Config {
+func NewConfig() Config {
+	return Config{}
+}
+
+func (cfg *Config) InitConfig() Config {
 	addr := flag.String("a", "localhost:8080", "server ip:port")
 	resultAddr := flag.String("b", "http://localhost:8080", "server result ip:port")
 
-	if envAddr := os.Getenv("SERVER_ADDRESS"); envAddr != "" {
-		addr = &envAddr
-	}
-
-	if envResultAddr := os.Getenv("BASE_URL"); envResultAddr != "" {
-		addr = &envResultAddr
-	}
+	cfg.envConfigurator()
 
 	flag.Parse()
 
 	return Config{
 		Addr:       *addr,
 		ResultAddr: *resultAddr,
+	}
+}
+
+func (cfg *Config) envConfigurator() {
+	if envAddr := os.Getenv("SERVER_ADDRESS"); envAddr != "" {
+		cfg.Addr = envAddr
+	}
+	if envResultAddr := os.Getenv("BASE_URL"); envResultAddr != "" {
+		cfg.ResultAddr = envResultAddr
 	}
 }

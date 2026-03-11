@@ -9,7 +9,9 @@ import (
 )
 
 func main() {
-	cfg := config.InitConfig()
+	cfg := config.NewConfig()
+	cfg.InitConfig()
+
 	r := handler.InitRoutes(handler.App{
 		Config:  cfg,
 		Storage: repository.NewCache(),
