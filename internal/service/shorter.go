@@ -1,6 +1,8 @@
 package service
 
 import (
+	"encoding/json"
+	"fmt"
 	"io"
 	"log/slog"
 	"net/http"
@@ -30,8 +32,45 @@ type ShortenerService struct {
 	Logger  logrus.Logger
 }
 
-func (s *ShortenerService) GetOriginalURLApi(res http.ResponseWriter, req *http.Request) {
+type ShortenRequest struct {
+	URL string `json:"url"`
+}
 
+type ShortenResponse struct {
+	Result string `json:"url"`
+}
+
+func (sr *ShortenRequest) Bind(r *http.Request) error {
+	if sr.URL == "" {
+		return fmt.Errorf("URL empty")
+	}
+	return nil
+}
+
+func (s *ShortenerService) GetShortURLApi(res http.ResponseWriter, req *http.Request) {
+	var shortenRequest ShortenRequest
+
+	if err := json.NewDecoder(req.Body).Decode(&shortenRequest); err != nil {
+		http.Error(res, "Invalid JSON", http.StatusBadRequest)
+		return
+	}
+	if err := shortenRequest.Bind(req); err != nil {
+		http.Error(res, "Invalid JSON", http.StatusBadRequest)
+		return
+	}
+
+	var shortURL string
+	for attempt := 0; attempt < MaxShortAttempts; attempt++ {
+		shortURL = generateShortURL()
+		err := s.Storage.Save(string(shortenRequest.URL), shortURL)
+		if err != nil {
+			continue
+		}
+		break
+	}
+
+	res.Header().Set("Content-Type", "application-json")
+	json.NewEncoder(res).Encode(ShortenResponse{Result: shortURL})
 }
 
 func (s *ShortenerService) GetOriginalURL(res http.ResponseWriter, req *http.Request) {
