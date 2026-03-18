@@ -9,6 +9,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/lxmp7p/yaGo-url-shortener/internal/config"
+	"github.com/sirupsen/logrus"
 )
 
 const (
@@ -26,6 +27,7 @@ type URLstorage interface {
 type ShortenerService struct {
 	Config  config.Config
 	Storage URLstorage
+	Logger  logrus.Logger
 }
 
 func (s *ShortenerService) GetOriginalURL(res http.ResponseWriter, req *http.Request) {
