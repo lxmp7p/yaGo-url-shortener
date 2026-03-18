@@ -12,6 +12,7 @@ import (
 
 	"github.com/lxmp7p/yaGo-url-shortener/internal/config"
 	"github.com/lxmp7p/yaGo-url-shortener/internal/repository"
+	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -26,6 +27,7 @@ func TestGetShortURLHandler(t *testing.T) {
 			ResultAddr: "http://localhost:8080",
 		},
 		Storage: repository.NewCache(),
+		Logger:  logrus.New(),
 	}
 
 	type want struct {
