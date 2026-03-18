@@ -37,7 +37,7 @@ type ShortenRequest struct {
 }
 
 type ShortenResponse struct {
-	Result string `json:"url"`
+	Result string `json:"result"`
 }
 
 func (sr *ShortenRequest) Bind(r *http.Request) error {
