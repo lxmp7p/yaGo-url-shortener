@@ -14,6 +14,8 @@ type App struct {
 }
 
 func InitRoutes(app App) chi.Router {
+	app.validateApp()
+
 	shortenerService := &service.ShortenerService{
 		Config:  app.Config,
 		Storage: app.Storage,
@@ -22,4 +24,10 @@ func InitRoutes(app App) chi.Router {
 	apiRouter.Use(LoggingMiddleware(app.Logger))
 	apiRouter.Mount("/", ShortenerRoutes(shortenerService))
 	return apiRouter
+}
+
+func (app App) validateApp() {
+	if app.Logger == nil {
+		app.Logger = logrus.New()
+	}
 }
