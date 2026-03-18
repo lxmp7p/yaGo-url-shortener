@@ -49,15 +49,20 @@ func (sr *ShortenRequest) Bind(r *http.Request) error {
 
 func (s *ShortenerService) GetShortURLApi(res http.ResponseWriter, req *http.Request) {
 	var shortenRequest ShortenRequest
+	fmt.Println("1")
 
 	if err := json.NewDecoder(req.Body).Decode(&shortenRequest); err != nil {
+		fmt.Println("2")
 		http.Error(res, "Invalid JSON", http.StatusBadRequest)
 		return
 	}
 	if err := shortenRequest.Bind(req); err != nil {
+		fmt.Println("3")
+
 		http.Error(res, "Invalid JSON", http.StatusBadRequest)
 		return
 	}
+	fmt.Println("4")
 
 	var shortURL string
 	for attempt := 0; attempt < MaxShortAttempts; attempt++ {
@@ -68,6 +73,7 @@ func (s *ShortenerService) GetShortURLApi(res http.ResponseWriter, req *http.Req
 		}
 		break
 	}
+	fmt.Println("5")
 
 	res.Header().Set("Content-Type", "application/json")
 	res.WriteHeader(http.StatusCreated)
