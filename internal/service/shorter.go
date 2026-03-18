@@ -30,6 +30,10 @@ type ShortenerService struct {
 	Logger  logrus.Logger
 }
 
+func (s *ShortenerService) GetOriginalURLApi(res http.ResponseWriter, req *http.Request) {
+
+}
+
 func (s *ShortenerService) GetOriginalURL(res http.ResponseWriter, req *http.Request) {
 	shortURL := chi.URLParam(req, "short_url")
 	originalURL, err := s.Storage.Get(shortURL)

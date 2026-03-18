@@ -7,8 +7,9 @@ import (
 
 func ShortenerRoutes(shortenerService *service.ShortenerService) chi.Router {
 	r := chi.NewRouter()
-	r.Get("/{short_url}", shortenerService.GetOriginalURL)
 	r.Post("/", shortenerService.GetShortURL)
+	r.Get("/{short_url}", shortenerService.GetOriginalURL)
+	r.Get("/api/shorten", shortenerService.GetOriginalURL)
 
 	return r
 }
