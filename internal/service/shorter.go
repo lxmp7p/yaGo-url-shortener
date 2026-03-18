@@ -69,7 +69,7 @@ func (s *ShortenerService) GetShortURLApi(res http.ResponseWriter, req *http.Req
 		break
 	}
 
-	res.Header().Set("Content-Type", "application-json")
+	res.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(res).Encode(ShortenResponse{Result: shortURL})
 }
 
