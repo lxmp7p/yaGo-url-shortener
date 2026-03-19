@@ -21,7 +21,7 @@ func InitRoutes(app App) chi.Router {
 		Storage: app.Storage,
 	}
 	apiRouter := chi.NewRouter()
-	apiRouter.Use(CompressMiddleware())
+	//apiRouter.Use(CompressMiddleware())
 	apiRouter.Use(LoggingMiddleware(app.Logger))
 
 	apiRouter.Mount("/", ShortenerRoutes(shortenerService))
