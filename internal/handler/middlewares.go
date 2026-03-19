@@ -104,7 +104,7 @@ func CompressMiddleware() func(http.Handler) http.Handler {
 
 			h.ServeHTTP(w, r)
 
-			if cw.Writer != nil {
+			if cw != nil && cw.Writer != nil {
 				cw.Writer.Close()
 			}
 		})
