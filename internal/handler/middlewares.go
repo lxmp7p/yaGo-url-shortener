@@ -102,6 +102,6 @@ func CompressMiddleware(logger *logrus.Logger) func(http.Handler) http.Handler {
 
 func checkRequestCompressed(r *http.Request) bool {
 	return strings.Contains(r.Header.Get(AcceptEncoding), Gzip) &&
-		(strings.Contains(r.Header.Get(ContentType), AppJson) ||
-			strings.Contains(r.Header.Get(ContentType), TextHtml))
+		(strings.Contains(r.Header.Get(ContentType), AppJSON) ||
+			strings.Contains(r.Header.Get(ContentType), TextHTML))
 }
