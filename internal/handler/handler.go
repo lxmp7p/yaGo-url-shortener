@@ -22,7 +22,7 @@ func InitRoutes(app App) chi.Router {
 	}
 	apiRouter := chi.NewRouter()
 	apiRouter.Use(LoggingMiddleware(app.Logger))
-	apiRouter.Use(LoggingMiddleware(app.Logger))
+	apiRouter.Use(CompressMiddleware())
 	apiRouter.Mount("/", ShortenerRoutes(shortenerService))
 	return apiRouter
 }

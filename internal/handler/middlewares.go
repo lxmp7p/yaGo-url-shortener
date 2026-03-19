@@ -48,11 +48,8 @@ type compressResponseWriter struct {
 }
 
 func (compressWriter *compressResponseWriter) Write(b []byte) (int, error) {
-	status := compressWriter.ResponseWriter.Header().Get("Status")
-	contentType := compressWriter.Header().Get(ContentType)
-
-	if contentType != "" && strings.Contains(compressWriter.Header().Get(ContentType), AppJSON) ||
-		strings.Contains(compressWriter.Header().Get(ContentType), TextHTML) && status == "" {
+	if strings.Contains(compressWriter.Header().Get(ContentType), AppJSON) ||
+		strings.Contains(compressWriter.Header().Get(ContentType), TextHTML) {
 		return compressWriter.Writer.Write(b)
 	}
 	return compressWriter.ResponseWriter.Write(b)
@@ -78,7 +75,7 @@ func LoggingMiddleware(logger *logrus.Logger) func(http.Handler) http.Handler {
 	}
 }
 
-func CompressMiddleware(logger *logrus.Logger) func(http.Handler) http.Handler {
+func CompressMiddleware() func(http.Handler) http.Handler {
 	return func(h http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			writer := w
