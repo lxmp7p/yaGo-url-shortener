@@ -1,8 +1,6 @@
 package handler
 
 import (
-	"fmt"
-
 	"github.com/go-chi/chi/v5"
 	"github.com/lxmp7p/yaGo-url-shortener/internal/config"
 	"github.com/lxmp7p/yaGo-url-shortener/internal/service"
@@ -17,7 +15,6 @@ type App struct {
 
 func InitRoutes(app App) chi.Router {
 	app.validateApp()
-	fmt.Println("a")
 	shortenerService := &service.ShortenerService{
 		Config:  app.Config,
 		Storage: app.Storage,
