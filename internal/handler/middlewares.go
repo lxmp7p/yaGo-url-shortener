@@ -48,16 +48,18 @@ type compressResponseWriter struct {
 }
 
 func (compressWriter *compressResponseWriter) Write(b []byte) (int, error) {
+	contentType := compressWriter.Header().Get(ContentType)
 	if compressWriter.Writer == nil &&
-		(strings.Contains(compressWriter.Header().Get(ContentType), AppJSON) ||
-			strings.Contains(compressWriter.Header().Get(ContentType), TextHTML)) {
+		(strings.Contains(contentType, AppJSON) || strings.Contains(contentType, TextHTML)) {
 
+		compressWriter.Header().Set("Content-Encoding", "gzip")
 		compressWriter.Writer = gzip.NewWriter(compressWriter.ResponseWriter)
 	}
-	
+
 	if compressWriter.Writer != nil {
 		return compressWriter.Writer.Write(b)
 	}
+
 	return compressWriter.ResponseWriter.Write(b)
 }
 
@@ -84,10 +86,6 @@ func LoggingMiddleware(logger *logrus.Logger) func(http.Handler) http.Handler {
 func CompressMiddleware() func(http.Handler) http.Handler {
 	return func(h http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			writer := w
-			fmt.Printf("ContentEncoding:%s", ContentEncoding)
-			fmt.Printf("AcceptEncoding:%s", AcceptEncoding)
-
 			if strings.Contains(r.Header.Get(ContentEncoding), Gzip) {
 				gz, err := gzip.NewReader(r.Body)
 				if err != nil {
@@ -99,13 +97,10 @@ func CompressMiddleware() func(http.Handler) http.Handler {
 			}
 
 			if strings.Contains(r.Header.Get(AcceptEncoding), Gzip) {
-				writer = &compressResponseWriter{
-					ResponseWriter: w,
-					Writer:         nil,
-				}
+				w = &compressResponseWriter{ResponseWriter: w}
 			}
 
-			h.ServeHTTP(writer, r)
+			h.ServeHTTP(w, r)
 		})
 	}
 }
