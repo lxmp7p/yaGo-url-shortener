@@ -48,8 +48,11 @@ type compressResponseWriter struct {
 }
 
 func (compressWriter *compressResponseWriter) Write(b []byte) (int, error) {
-	if strings.Contains(compressWriter.Header().Get(ContentType), AppJSON) ||
-		strings.Contains(compressWriter.Header().Get(ContentType), TextHTML) {
+	status := compressWriter.ResponseWriter.Header().Get("Status")
+	contentType := compressWriter.Header().Get(ContentType)
+
+	if contentType != "" && strings.Contains(compressWriter.Header().Get(ContentType), AppJSON) ||
+		strings.Contains(compressWriter.Header().Get(ContentType), TextHTML) && status == "" {
 		return compressWriter.Writer.Write(b)
 	}
 	return compressWriter.ResponseWriter.Write(b)
