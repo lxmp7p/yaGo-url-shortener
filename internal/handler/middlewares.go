@@ -1,8 +1,10 @@
 package handler
 
 import (
+	"compress/gzip"
 	"fmt"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/sirupsen/logrus"
@@ -40,6 +42,15 @@ func (lw *loggerResponseWriter) WriteHeader(code int) {
 	lw.ResponseWriter.WriteHeader(code)
 }
 
+type compressResponseWriter struct {
+	http.ResponseWriter
+	Writer *gzip.Writer
+}
+
+func (compressWriter *compressResponseWriter) Write(b []byte) (int, error) {
+	return compressWriter.Writer.Write(b)
+}
+
 func LoggingMiddleware(logger *logrus.Logger) func(http.Handler) http.Handler {
 	return func(h http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -58,4 +69,39 @@ func LoggingMiddleware(logger *logrus.Logger) func(http.Handler) http.Handler {
 			logger.Info(logData)
 		})
 	}
+}
+
+func CompressMiddleware(logger *logrus.Logger) func(http.Handler) http.Handler {
+	return func(h http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			writer := w
+			if strings.Contains(r.Header.Get(CONTENT_ENCODING), GZIP) {
+				gz, err := gzip.NewReader(r.Body)
+				if err != nil {
+					http.Error(w, err.Error(), http.StatusBadRequest)
+					return
+				}
+				r.Body = gz
+				defer gz.Close()
+			}
+
+			if checkRequestCompressed(r) {
+				compressWriter := gzip.NewWriter(w)
+				defer compressWriter.Close()
+
+				writer = &compressResponseWriter{
+					ResponseWriter: w,
+					Writer:         compressWriter,
+				}
+			}
+
+			h.ServeHTTP(writer, r)
+		})
+	}
+}
+
+func checkRequestCompressed(r *http.Request) bool {
+	return strings.Contains(r.Header.Get(ACCEPT_ENCODING), GZIP) &&
+		(strings.Contains(r.Header.Get(CONTENT_TYPE), APP_JSON) ||
+			strings.Contains(r.Header.Get(CONTENT_TYPE), TEXT_HTML))
 }
