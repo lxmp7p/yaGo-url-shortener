@@ -79,6 +79,9 @@ func CompressMiddleware() func(http.Handler) http.Handler {
 	return func(h http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			writer := w
+			fmt.Printf("ContentEncoding:%s", ContentEncoding)
+			fmt.Printf("AcceptEncoding:%s", AcceptEncoding)
+
 			if strings.Contains(r.Header.Get(ContentEncoding), Gzip) {
 				gz, err := gzip.NewReader(r.Body)
 				if err != nil {
