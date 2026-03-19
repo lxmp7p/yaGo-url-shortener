@@ -96,9 +96,9 @@ func CompressMiddleware() func(http.Handler) http.Handler {
 				defer gz.Close()
 			}
 
-			var cw compressResponseWriter
+			var cw *compressResponseWriter
 			if strings.Contains(r.Header.Get(AcceptEncoding), Gzip) {
-				cw := &compressResponseWriter{ResponseWriter: w}
+				cw = &compressResponseWriter{ResponseWriter: w}
 				w = cw
 			}
 
