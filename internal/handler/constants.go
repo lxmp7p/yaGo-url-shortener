@@ -1,10 +1,10 @@
 package handler
 
 const (
-	CONTENT_ENCODING = "Content-Encoding"
-	CONTENT_TYPE     = "Content-Type"
-	GZIP             = "gzip"
-	APP_JSON         = "application/json"
-	TEXT_HTML        = "text/html"
-	ACCEPT_ENCODING  = "Accept-Encoding"
+	ContentEncoding = "Content-Encoding"
+	ContentType     = "Content-Type"
+	Gzip            = "gzip"
+	AppJson         = "application/json"
+	TextHtml        = "text/html"
+	AcceptEncoding  = "Accept-Encoding"
 )

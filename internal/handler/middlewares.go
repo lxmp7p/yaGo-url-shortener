@@ -75,7 +75,7 @@ func CompressMiddleware(logger *logrus.Logger) func(http.Handler) http.Handler {
 	return func(h http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			writer := w
-			if strings.Contains(r.Header.Get(CONTENT_ENCODING), GZIP) {
+			if strings.Contains(r.Header.Get(ContentEncoding), Gzip) {
 				gz, err := gzip.NewReader(r.Body)
 				if err != nil {
 					http.Error(w, err.Error(), http.StatusBadRequest)
@@ -101,7 +101,7 @@ func CompressMiddleware(logger *logrus.Logger) func(http.Handler) http.Handler {
 }
 
 func checkRequestCompressed(r *http.Request) bool {
-	return strings.Contains(r.Header.Get(ACCEPT_ENCODING), GZIP) &&
-		(strings.Contains(r.Header.Get(CONTENT_TYPE), APP_JSON) ||
-			strings.Contains(r.Header.Get(CONTENT_TYPE), TEXT_HTML))
+	return strings.Contains(r.Header.Get(AcceptEncoding), Gzip) &&
+		(strings.Contains(r.Header.Get(ContentType), AppJson) ||
+			strings.Contains(r.Header.Get(ContentType), TextHtml))
 }
