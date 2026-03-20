@@ -5,6 +5,7 @@ import (
 	"github.com/lxmp7p/yaGo-url-shortener/internal/config"
 	"github.com/lxmp7p/yaGo-url-shortener/internal/service"
 	"github.com/sirupsen/logrus"
+	"fmt"
 )
 
 type App struct {
