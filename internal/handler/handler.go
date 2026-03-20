@@ -5,7 +5,6 @@ import (
 	"github.com/lxmp7p/yaGo-url-shortener/internal/config"
 	"github.com/lxmp7p/yaGo-url-shortener/internal/service"
 	"github.com/sirupsen/logrus"
-	"fmt"
 )
 
 type App struct {
@@ -16,7 +15,6 @@ type App struct {
 
 func InitRoutes(app App) chi.Router {
 	app.validateApp()
-	fmt.Println("saas")
 	shortenerService := &service.ShortenerService{
 		Config:  app.Config,
 		Storage: app.Storage,

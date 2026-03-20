@@ -26,6 +26,7 @@ type Record struct {
 func NewCache(filepath string) *Cache {
 	cache := &Cache{
 		URLCache: make(map[string]string),
+		filename: filepath,
 	}
 
 	cache.Load(filepath)
