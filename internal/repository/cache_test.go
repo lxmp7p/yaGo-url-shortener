@@ -1,6 +1,8 @@
 package repository
 
 import (
+	"log"
+	"os"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -54,6 +56,13 @@ func TestCache_Save(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			tmpFile, err := os.CreateTemp("", "tmp")
+			if err != nil {
+				log.Fatal(err)
+			}
+			defer os.Remove(tmpFile.Name())
+			defer tmpFile.Close()
+			
 			cache := NewCache(tt.filepath)
 			gotErr := cache.Save(tt.originalURL, tt.shortURL)
 			if gotErr != nil {
@@ -79,7 +88,7 @@ func TestCache_Get(t *testing.T) {
 	}{
 		{
 			name: "url not found",
-			filepath: "----",
+			filepath: "tmp",
 			shortURL: "--------",
 			want: "--------",
 			wantErr: true,
@@ -87,6 +96,13 @@ func TestCache_Get(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			tmpFile, err := os.CreateTemp("", "tmp")
+			if err != nil {
+				log.Fatal(err)
+			}
+			defer os.Remove(tmpFile.Name())
+			defer tmpFile.Close()
+
 			cache := NewCache(tt.filepath)
 			got, gotErr := cache.Get(tt.shortURL)
 			if gotErr != nil {
