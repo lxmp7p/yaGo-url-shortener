@@ -15,7 +15,7 @@ type App struct {
 
 func InitRoutes(app App) chi.Router {
 	app.validateApp()
-
+	fmt.Println("saas")
 	shortenerService := &service.ShortenerService{
 		Config:  app.Config,
 		Storage: app.Storage,
