@@ -4,9 +4,11 @@ import (
 	"bytes"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"os"
 	"path"
 	"testing"
 
@@ -21,12 +23,19 @@ func TestGetShortURLHandler(t *testing.T) {
 	var tmpURL string
 	var templateURL = "http://localhost:8080/"
 
+	tmpFile, err := os.CreateTemp("", "tmp-*.json")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer os.Remove(tmpFile.Name())
+	defer tmpFile.Close()
+
 	app := App{
 		Config: config.Config{
 			Addr:       "localhost:8080",
 			ResultAddr: "http://localhost:8080",
 		},
-		Storage: repository.NewCache("tmp"),
+		Storage: repository.NewCache(tmpFile.Name()),
 		Logger:  logrus.New(),
 	}
 
