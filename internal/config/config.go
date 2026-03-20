@@ -8,6 +8,7 @@ import (
 type Config struct {
 	Addr       string
 	ResultAddr string
+	FileStoragePath string
 }
 
 func NewConfig() Config {
@@ -21,16 +22,20 @@ func (cfg *Config) InitConfig() Config {
 	return Config{
 		Addr:       cfg.Addr,
 		ResultAddr: cfg.ResultAddr,
+		FileStoragePath: cfg.FileStoragePath,
 	}
 }
 
 func (cfg *Config) argsConfigurator() {
 	addr := flag.String("a", "localhost:8080", "server ip:port")
 	resultAddr := flag.String("b", "http://localhost:8080", "server result ip:port")
+	fileStoragePath := flag.String("f", "storageFile", "file storage path")
+
 	flag.Parse()
 
 	cfg.Addr = *addr
 	cfg.ResultAddr = *resultAddr
+	cfg.FileStoragePath = *fileStoragePath
 }
 
 func (cfg *Config) envConfigurator() {
@@ -39,5 +44,8 @@ func (cfg *Config) envConfigurator() {
 	}
 	if envResultAddr := os.Getenv("BASE_URL"); envResultAddr != "" {
 		cfg.ResultAddr = envResultAddr
+	}
+	if envFileStoragePath := os.Getenv("FILE_STORAGE_PATH"); envFileStoragePath != "" {
+		cfg.FileStoragePath = envFileStoragePath
 	}
 }

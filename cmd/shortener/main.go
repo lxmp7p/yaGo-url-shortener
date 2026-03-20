@@ -17,7 +17,7 @@ func main() {
 
 	r := handler.InitRoutes(handler.App{
 		Config:  cfg,
-		Storage: repository.NewCache(),
+		Storage: repository.NewCache(cfg.FileStoragePath),
 		Logger:  logger,
 	})
 	http.ListenAndServe(cfg.Addr, r)
