@@ -6,6 +6,8 @@ import (
 	"errors"
 	"os"
 	"sync"
+
+	"github.com/google/uuid"
 )
 
 var (
@@ -19,6 +21,7 @@ type Cache struct {
 }
 
 type Record struct {
+	UUID string `json:"uuid"`
 	ShortURL string `json:"short_url"`
 	OriginalURL string `json:"original_url"`
 }
@@ -43,9 +46,10 @@ func (cache *Cache) Save(originalURL, shortURL string) error {
 	}
 	cache.URLCache[shortURL] = originalURL
 
-	record := map[string]string{
-		"short_url": shortURL,
-		"original_url": originalURL,
+	record := Record{
+		UUID: uuid.New().String(),
+		ShortURL: shortURL,
+		OriginalURL: originalURL,
 	}
 
 	data, err := json.Marshal(record)

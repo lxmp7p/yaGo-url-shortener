@@ -27,7 +27,7 @@ func InitRoutes(app App) chi.Router {
 	return apiRouter
 }
 
-func (app App) validateApp() {
+func (app *App) validateApp() {
 	if app.Logger == nil {
 		app.Logger = logrus.New()
 	}
