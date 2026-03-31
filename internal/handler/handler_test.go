@@ -4,14 +4,17 @@ import (
 	"bytes"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"os"
 	"path"
 	"testing"
 
 	"github.com/lxmp7p/yaGo-url-shortener/internal/config"
 	"github.com/lxmp7p/yaGo-url-shortener/internal/repository"
+	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -20,12 +23,20 @@ func TestGetShortURLHandler(t *testing.T) {
 	var tmpURL string
 	var templateURL = "http://localhost:8080/"
 
+	tmpFile, err := os.CreateTemp("", "tmp-*.json")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer os.Remove(tmpFile.Name())
+	defer tmpFile.Close()
+
 	app := App{
 		Config: config.Config{
 			Addr:       "localhost:8080",
 			ResultAddr: "http://localhost:8080",
 		},
-		Storage: repository.NewCache(),
+		Storage: repository.NewCache(tmpFile.Name()),
+		Logger:  logrus.New(),
 	}
 
 	type want struct {

@@ -1,6 +1,8 @@
 package service
 
 import (
+	"encoding/json"
+	"fmt"
 	"io"
 	"log/slog"
 	"net/http"
@@ -9,6 +11,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/lxmp7p/yaGo-url-shortener/internal/config"
+	"github.com/sirupsen/logrus"
 )
 
 const (
@@ -26,6 +29,57 @@ type URLstorage interface {
 type ShortenerService struct {
 	Config  config.Config
 	Storage URLstorage
+	Logger  logrus.Logger
+}
+
+type ShortenRequest struct {
+	URL string `json:"url"`
+}
+
+type ShortenResponse struct {
+	Result string `json:"result"`
+}
+
+func (sr *ShortenRequest) Bind(r *http.Request) error {
+	if sr.URL == "" {
+		return fmt.Errorf("URL empty")
+	}
+	return nil
+}
+
+func (s *ShortenerService) GetShortURLApi(res http.ResponseWriter, req *http.Request) {
+	var shortenRequest ShortenRequest
+
+	if err := json.NewDecoder(req.Body).Decode(&shortenRequest); err != nil {
+		http.Error(res, "Invalid JSON", http.StatusBadRequest)
+		return
+	}
+
+	if err := shortenRequest.Bind(req); err != nil {
+
+		http.Error(res, "Invalid JSON", http.StatusBadRequest)
+		return
+	}
+
+	var shortURL string
+	for attempt := 0; attempt < MaxShortAttempts; attempt++ {
+		shortURL = generateShortURL()
+		err := s.Storage.Save(string(shortenRequest.URL), shortURL)
+		if err != nil {
+			continue
+		}
+		break
+	}
+
+	shortURL, err := url.JoinPath(s.Config.ResultAddr, shortURL)
+	if err != nil {
+		http.Error(res, "failed to generate URL", http.StatusBadRequest)
+		return
+	}
+
+	res.Header().Set("Content-Type", "application/json")
+	res.WriteHeader(http.StatusCreated)
+	json.NewEncoder(res).Encode(ShortenResponse{Result: shortURL})
 }
 
 func (s *ShortenerService) GetOriginalURL(res http.ResponseWriter, req *http.Request) {

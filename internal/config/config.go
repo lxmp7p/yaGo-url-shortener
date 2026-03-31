@@ -2,21 +2,50 @@ package config
 
 import (
 	"flag"
+	"os"
 )
 
 type Config struct {
 	Addr       string
 	ResultAddr string
+	FileStoragePath string
 }
 
-func InitConfig() Config {
+func NewConfig() Config {
+	return Config{}
+}
+
+func (cfg *Config) InitConfig() Config {
+	cfg.argsConfigurator()
+	cfg.envConfigurator()
+
+	return Config{
+		Addr:       cfg.Addr,
+		ResultAddr: cfg.ResultAddr,
+		FileStoragePath: cfg.FileStoragePath,
+	}
+}
+
+func (cfg *Config) argsConfigurator() {
 	addr := flag.String("a", "localhost:8080", "server ip:port")
 	resultAddr := flag.String("b", "http://localhost:8080", "server result ip:port")
+	fileStoragePath := flag.String("f", "storageFile", "file storage path")
 
 	flag.Parse()
 
-	return Config{
-		Addr:       *addr,
-		ResultAddr: *resultAddr,
+	cfg.Addr = *addr
+	cfg.ResultAddr = *resultAddr
+	cfg.FileStoragePath = *fileStoragePath
+}
+
+func (cfg *Config) envConfigurator() {
+	if envAddr := os.Getenv("SERVER_ADDRESS"); envAddr != "" {
+		cfg.Addr = envAddr
+	}
+	if envResultAddr := os.Getenv("BASE_URL"); envResultAddr != "" {
+		cfg.ResultAddr = envResultAddr
+	}
+	if envFileStoragePath := os.Getenv("FILE_STORAGE_PATH"); envFileStoragePath != "" {
+		cfg.FileStoragePath = envFileStoragePath
 	}
 }

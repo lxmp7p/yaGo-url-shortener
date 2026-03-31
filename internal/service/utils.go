@@ -10,3 +10,4 @@ func generateShortURL() string {
 
 	return string(b)
 }
+
