@@ -6,9 +6,10 @@ import (
 )
 
 type Config struct {
-	Addr       string
-	ResultAddr string
+	Addr            string
+	ResultAddr      string
 	FileStoragePath string
+	DatabaseDsn     string
 }
 
 func NewConfig() Config {
@@ -20,9 +21,10 @@ func (cfg *Config) InitConfig() Config {
 	cfg.envConfigurator()
 
 	return Config{
-		Addr:       cfg.Addr,
-		ResultAddr: cfg.ResultAddr,
+		Addr:            cfg.Addr,
+		ResultAddr:      cfg.ResultAddr,
 		FileStoragePath: cfg.FileStoragePath,
+		DatabaseDsn:     cfg.DatabaseDsn,
 	}
 }
 
@@ -30,12 +32,14 @@ func (cfg *Config) argsConfigurator() {
 	addr := flag.String("a", "localhost:8080", "server ip:port")
 	resultAddr := flag.String("b", "http://localhost:8080", "server result ip:port")
 	fileStoragePath := flag.String("f", "storageFile", "file storage path")
+	databaseDsn := flag.String("d", "postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable", "database connection string")
 
 	flag.Parse()
 
 	cfg.Addr = *addr
 	cfg.ResultAddr = *resultAddr
 	cfg.FileStoragePath = *fileStoragePath
+	cfg.DatabaseDsn = *databaseDsn
 }
 
 func (cfg *Config) envConfigurator() {
@@ -47,5 +51,8 @@ func (cfg *Config) envConfigurator() {
 	}
 	if envFileStoragePath := os.Getenv("FILE_STORAGE_PATH"); envFileStoragePath != "" {
 		cfg.FileStoragePath = envFileStoragePath
+	}
+	if envDatabaseDsn := os.Getenv("DATABASE_DSN"); envDatabaseDsn != "" {
+		cfg.DatabaseDsn = envDatabaseDsn
 	}
 }
