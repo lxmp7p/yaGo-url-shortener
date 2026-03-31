@@ -17,12 +17,13 @@ func main() {
 
 	logger := logrus.New()
 
-	db.InitDB(cfg)
+	db := db.InitDB(cfg)
 
 	r := handler.InitRoutes(handler.App{
 		Config:  cfg,
 		Storage: repository.NewCache(cfg.FileStoragePath),
 		Logger:  logger,
+		Database: db,
 	})
 	http.ListenAndServe(cfg.Addr, r)
 }

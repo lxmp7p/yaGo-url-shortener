@@ -1,6 +1,7 @@
 package service
 
 import (
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -27,9 +28,10 @@ type URLstorage interface {
 }
 
 type ShortenerService struct {
-	Config  config.Config
-	Storage URLstorage
-	Logger  logrus.Logger
+	Config   config.Config
+	Storage  URLstorage
+	Logger   logrus.Logger
+	Database *sql.DB
 }
 
 type ShortenRequest struct {

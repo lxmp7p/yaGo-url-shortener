@@ -1,6 +1,8 @@
 package handler
 
 import (
+	"database/sql"
+
 	"github.com/go-chi/chi/v5"
 	"github.com/lxmp7p/yaGo-url-shortener/internal/config"
 	"github.com/lxmp7p/yaGo-url-shortener/internal/service"
@@ -8,16 +10,18 @@ import (
 )
 
 type App struct {
-	Config  config.Config
-	Storage service.URLstorage
-	Logger  *logrus.Logger
+	Config   config.Config
+	Storage  service.URLstorage
+	Logger   *logrus.Logger
+	Database *sql.DB
 }
 
 func InitRoutes(app App) chi.Router {
 	app.validateApp()
 	shortenerService := &service.ShortenerService{
-		Config:  app.Config,
-		Storage: app.Storage,
+		Config:   app.Config,
+		Storage:  app.Storage,
+		Database: app.Database,
 	}
 	apiRouter := chi.NewRouter()
 	apiRouter.Use(CompressMiddleware())
