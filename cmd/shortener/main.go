@@ -17,7 +17,7 @@ func main() {
 
 	logger := logrus.New()
 
-	db.InitDb(cfg)
+	db.InitDB(cfg)
 
 	r := handler.InitRoutes(handler.App{
 		Config:  cfg,
