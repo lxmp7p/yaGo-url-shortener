@@ -22,7 +22,9 @@ func main() {
 
 	logger := logrus.New()
 	if cfg.DatabaseDsn != "" {
+		logger.Info("Running migrations...")
 		runMigrations(cfg.DatabaseDsn, logger)
+		logger.Info("Migrations done")
 	}
 
 	r := handler.InitRoutes(handler.App{
@@ -30,7 +32,10 @@ func main() {
 		Storage: selectStorage(cfg),
 		Logger:  logger,
 	})
-	http.ListenAndServe(cfg.Addr, r)
+	logger.Infof("Starting server on %s", cfg.Addr)
+	err := http.ListenAndServe(cfg.Addr, r)
+	logger.Fatalf("Server stopped: %v", err)
+
 }
 
 func selectStorage(cfg config.Config) service.URLstorage {
@@ -40,7 +45,7 @@ func selectStorage(cfg config.Config) service.URLstorage {
 	if cfg.FileStoragePath != "" {
 		return repository.NewCache(cfg.FileStoragePath)
 	}
-	return nil
+	return repository.NewCache("")
 }
 
 func runMigrations(DSN string, logger *logrus.Logger) {
