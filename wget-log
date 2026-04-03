@@ -8,4 +8,14 @@ HTTP request sent, awaiting response... 206 Partial Content
 Length: 12683159 (12M), 12667342 (12M) remaining [application/x-tar]
 Saving to: ‘/home/lxmp7p/.cache/trunk/cli/tmp.p73Ra7BvJo/launcher/install/download-1.25.0.tar.gz’
 
-     0K ,,,,,,,,,, ,,,,,..... .......... .
+     0K ,,,,,,,,,, ,,,,,..... .......... .                      0% 1,27M=0,01s
+
+2026-04-03 15:52:30 (1,27 MB/s) - Read error at byte 32201/12683159 (Success). Retrying.
+
+--2026-04-03 15:52:32--  (try: 3)  https://trunk.io/releases/1.25.0/trunk-1.25.0-linux-x86_64.tar.gz
+Connecting to trunk.io (trunk.io)|3.160.150.11|:443... connected.
+HTTP request sent, awaiting response... 206 Partial Content
+Length: 12683159 (12M), 12650958 (12M) remaining [application/x-tar]
+Saving to: ‘/home/lxmp7p/.cache/trunk/cli/tmp.p73Ra7BvJo/launcher/install/download-1.25.0.tar.gz’
+
+     0K ,,,,,,,,,, ,,,,,,,,,, ,,,,,,,,,, ,......... .......
