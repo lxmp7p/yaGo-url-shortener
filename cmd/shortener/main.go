@@ -1,6 +1,7 @@
 package main
 
 import (
+	"database/sql"
 	"net/http"
 	"path/filepath"
 
@@ -27,10 +28,13 @@ func main() {
 		logger.Info("Migrations done")
 	}
 
+	database := db.InitDB(cfg)
+
 	r := handler.InitRoutes(handler.App{
-		Config:  cfg,
-		Storage: selectStorage(cfg),
-		Logger:  logger,
+		Config:   cfg,
+		Storage:  selectStorage(cfg, database),
+		Logger:   logger,
+		Database: database,
 	})
 	logger.Infof("Starting server on %s", cfg.Addr)
 	err := http.ListenAndServe(cfg.Addr, r)
@@ -38,9 +42,9 @@ func main() {
 
 }
 
-func selectStorage(cfg config.Config) service.URLstorage {
+func selectStorage(cfg config.Config, database *sql.DB) service.URLstorage {
 	if cfg.DatabaseDsn != "" {
-		return repository.NewDatabaseCache(db.InitDB(cfg))
+		return repository.NewDatabaseCache(database)
 	}
 	if cfg.FileStoragePath != "" {
 		return repository.NewCache(cfg.FileStoragePath)
