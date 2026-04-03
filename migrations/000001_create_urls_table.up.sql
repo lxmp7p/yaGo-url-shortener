@@ -1,7 +1,7 @@
 -- migrations/000001_create_url_table.up.sql
 -- Создание таблицы ссылок
 CREATE TABLE urls (
-    id SERIAL PRIMARY KEY,
+    id UUID PRIMARY KEY,
     original VARCHAR(255) NOT NULL,
     short VARCHAR(255) NOT NULL
 );

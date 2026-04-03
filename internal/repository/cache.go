@@ -77,7 +77,7 @@ func (cache *Cache) Get(shortURL string) (string, error) {
 
 	originalURL, ok := cache.URLCache[shortURL]
 	if !ok {
-		return "", errors.New("url not found")
+		return "", errors.New(urlNotFound)
 	}
 
 	return originalURL, nil
