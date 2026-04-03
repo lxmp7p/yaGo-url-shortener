@@ -13,7 +13,7 @@ type DatabaseCache struct {
 	db *sql.DB
 }
 
-type Url struct {
+type URL struct {
 	uuid     uuid.UUID
 	original string
 	short    string
@@ -55,7 +55,7 @@ func (cache *DatabaseCache) Get(shortURL string) (string, error) {
 	return original, nil
 }
 
-func (cache *DatabaseCache) Load(shortURL string) ([]*Url, error) {
+func (cache *DatabaseCache) Load(shortURL string) ([]*URL, error) {
 	query := "SELECT id, original, short FROM urls"
 
 	rows, err := cache.db.Query(query)
@@ -64,9 +64,9 @@ func (cache *DatabaseCache) Load(shortURL string) ([]*Url, error) {
 	}
 	defer rows.Close()
 
-	var result []*Url
+	var result []*URL
 	for rows.Next() {
-		var u Url
+		var u URL
 		if err = rows.Scan(&u.uuid, &u.original, &u.short); err != nil {
 			return nil, err
 		}

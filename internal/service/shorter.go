@@ -58,7 +58,6 @@ func (s *ShortenerService) GetShortURLApi(res http.ResponseWriter, req *http.Req
 	}
 
 	if err := shortenRequest.Bind(req); err != nil {
-
 		http.Error(res, "Invalid JSON", http.StatusBadRequest)
 		return
 	}
