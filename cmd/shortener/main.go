@@ -2,6 +2,7 @@ package main
 
 import (
 	"net/http"
+	"path/filepath"
 
 	"github.com/golang-migrate/migrate/v4"
 	"github.com/lxmp7p/yaGo-url-shortener/internal/config"
@@ -9,6 +10,8 @@ import (
 	"github.com/lxmp7p/yaGo-url-shortener/internal/repository"
 	"github.com/lxmp7p/yaGo-url-shortener/internal/service"
 
+	_ "github.com/golang-migrate/migrate/v4/database/postgres"
+	_ "github.com/golang-migrate/migrate/v4/source/file"
 	"github.com/lxmp7p/yaGo-url-shortener/internal/handler"
 	"github.com/sirupsen/logrus"
 )
@@ -41,7 +44,11 @@ func selectStorage(cfg config.Config) service.URLstorage {
 }
 
 func runMigrations(DSN string, logger *logrus.Logger) {
-	migrationsPath := "file://../migrations"
+	path, err := filepath.Abs("../../migrations")
+	if err != nil {
+		logger.Fatal("Migration not found")
+	}
+	migrationsPath := "file://" + path
 	dbURL := DSN
 	m, err := migrate.New(migrationsPath, dbURL)
 	if err != nil {
