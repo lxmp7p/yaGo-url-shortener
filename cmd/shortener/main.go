@@ -62,9 +62,11 @@ func runMigrations(DSN string, logger *logrus.Logger) {
 	m, err := migrate.New(migrationsPath, dbURL)
 	if err != nil {
 		logger.Errorf("Failed to initialize migrate: %v", err)
+		return
 	}
 	if err := m.Up(); err != nil && err != migrate.ErrNoChange {
 		logger.Errorf("Migration failed: %v", err)
+		return
 	}
 
 	logger.Println("Migrations applied successfully!")
