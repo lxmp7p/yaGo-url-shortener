@@ -31,7 +31,7 @@ func (cfg *Config) InitConfig() Config {
 func (cfg *Config) argsConfigurator() {
 	addr := flag.String("a", "localhost:8080", "server ip:port")
 	resultAddr := flag.String("b", "http://localhost:8080", "server result ip:port")
-	fileStoragePath := flag.String("f", "", "file storage path")
+	fileStoragePath := flag.String("f", "storageFile", "file storage path")
 	databaseDsn := flag.String("d", "", "database connection string")
 
 	flag.Parse()
