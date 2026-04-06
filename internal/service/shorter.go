@@ -128,6 +128,7 @@ func (s *ShortenerService) GetShortURLApi(res http.ResponseWriter, req *http.Req
 			if errors.As(err, &URLErr) {
 				res.Header().Set("Content-Type", "application/json")
 				status = http.StatusConflict
+				shortURL = URLErr.Short
 				break
 			}
 			continue
@@ -183,6 +184,7 @@ func (s *ShortenerService) GetShortURL(res http.ResponseWriter, req *http.Reques
 			if errors.As(err, &URLErr) {
 				res.Header().Set("Content-Type", "application/json")
 				status = http.StatusConflict
+				shortURL = URLErr.Short
 				break
 			}
 			continue
