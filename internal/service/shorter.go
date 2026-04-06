@@ -49,6 +49,60 @@ func (sr *ShortenRequest) Bind(r *http.Request) error {
 	return nil
 }
 
+type Original struct {
+	ID          string `json:"correlation_id"`
+	OriginalUrl string `json:"original_url"`
+}
+
+type Shorten struct {
+	ID       string `json:"correlation_id"`
+	ShortUrl string `json:"short_url"`
+}
+
+func (s *ShortenerService) GetShortURLBatchApi(res http.ResponseWriter, req *http.Request) {
+	var request []Original
+
+	if err := json.NewDecoder(req.Body).Decode(&request); err != nil {
+		http.Error(res, "Invalid JSON", http.StatusBadRequest)
+		return
+	}
+
+	if len(request) == 0 {
+		http.Error(res, "Empty batch", http.StatusBadRequest)
+	}
+
+	var response []Shorten
+
+	for _, item := range request {
+		var shortURL string
+		var err error
+
+		for attempt := 0; attempt < MaxShortAttempts; attempt++ {
+			shortURL = generateShortURL()
+			err := s.Storage.Save(item.OriginalUrl, shortURL)
+			if err != nil {
+				continue
+			}
+			break
+		}
+
+		shortURL, err = url.JoinPath(s.Config.ResultAddr, shortURL)
+		if err != nil {
+			http.Error(res, "failed to generate URL", http.StatusBadRequest)
+			return
+		}
+
+		response = append(response, Shorten{
+			ID:       item.ID,
+			ShortUrl: shortURL,
+		})
+	}
+
+	res.Header().Set("Content-Type", "application/json")
+	res.WriteHeader(http.StatusCreated)
+	json.NewEncoder(res).Encode(response)
+}
+
 func (s *ShortenerService) GetShortURLApi(res http.ResponseWriter, req *http.Request) {
 	var shortenRequest ShortenRequest
 
