@@ -73,7 +73,7 @@ func (cache *DatabaseCache) Load(shortURL string) ([]*URL, error) {
 		result = append(result, &u)
 	}
 
-	if err != nil {
+	if err := rows.Err(); err != nil {
 		return nil, err
 	}
 
