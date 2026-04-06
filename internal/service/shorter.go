@@ -51,15 +51,15 @@ func (sr *ShortenRequest) Bind(r *http.Request) error {
 
 type Original struct {
 	ID          string `json:"correlation_id"`
-	OriginalUrl string `json:"original_url"`
+	OriginalURL string `json:"original_url"`
 }
 
 type Shorten struct {
 	ID       string `json:"correlation_id"`
-	ShortUrl string `json:"short_url"`
+	ShortURL string `json:"short_url"`
 }
 
-func (s *ShortenerService) GetShortURLBatchApi(res http.ResponseWriter, req *http.Request) {
+func (s *ShortenerService) GetShortURLBatchAPI(res http.ResponseWriter, req *http.Request) {
 	var request []Original
 
 	if err := json.NewDecoder(req.Body).Decode(&request); err != nil {
@@ -79,7 +79,7 @@ func (s *ShortenerService) GetShortURLBatchApi(res http.ResponseWriter, req *htt
 
 		for attempt := 0; attempt < MaxShortAttempts; attempt++ {
 			shortURL = generateShortURL()
-			err := s.Storage.Save(item.OriginalUrl, shortURL)
+			err := s.Storage.Save(item.OriginalURL, shortURL)
 			if err != nil {
 				continue
 			}
@@ -94,7 +94,7 @@ func (s *ShortenerService) GetShortURLBatchApi(res http.ResponseWriter, req *htt
 
 		response = append(response, Shorten{
 			ID:       item.ID,
-			ShortUrl: shortURL,
+			ShortURL: shortURL,
 		})
 	}
 
