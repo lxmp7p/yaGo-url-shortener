@@ -1,0 +1,11 @@
+                      0% 2,39M=0,006s
+
+2026-04-06 12:56:14 (2,39 MB/s) - Read error at byte 31807/12683159 (Success). Retrying.
+
+--2026-04-06 12:56:16--  (try: 3)  https://trunk.io/releases/1.25.0/trunk-1.25.0-linux-x86_64.tar.gz
+Connecting to trunk.io (trunk.io)|3.160.150.11|:443... connected.
+HTTP request sent, awaiting response... 206 Partial Content
+Length: 12683159 (12M), 12651352 (12M) remaining [application/x-tar]
+Saving to: ‘/home/lxmp7p/.cache/trunk/cli/tmp.qpKl9Yf5Da/launcher/install/download-1.25.0.tar.gz’
+
+     0K ,,,,,,,,,, ,,,,,,,,,, ,,,,,,,,,, ,......... .......

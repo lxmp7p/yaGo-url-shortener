@@ -3,6 +3,7 @@ package service
 import (
 	"database/sql"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"log/slog"
@@ -12,6 +13,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/lxmp7p/yaGo-url-shortener/internal/config"
+	"github.com/lxmp7p/yaGo-url-shortener/internal/repository"
 	"github.com/sirupsen/logrus"
 )
 
@@ -105,6 +107,7 @@ func (s *ShortenerService) GetShortURLBatchAPI(res http.ResponseWriter, req *htt
 
 func (s *ShortenerService) GetShortURLApi(res http.ResponseWriter, req *http.Request) {
 	var shortenRequest ShortenRequest
+	status := http.StatusCreated
 
 	if err := json.NewDecoder(req.Body).Decode(&shortenRequest); err != nil {
 		http.Error(res, "Invalid JSON", http.StatusBadRequest)
@@ -121,6 +124,12 @@ func (s *ShortenerService) GetShortURLApi(res http.ResponseWriter, req *http.Req
 		shortURL = generateShortURL()
 		err := s.Storage.Save(string(shortenRequest.URL), shortURL)
 		if err != nil {
+			var URLErr *repository.URLError
+			if errors.As(err, &URLErr) {
+				res.Header().Set("Content-Type", "application/json")
+				status = http.StatusConflict
+				break
+			}
 			continue
 		}
 		break
@@ -133,7 +142,7 @@ func (s *ShortenerService) GetShortURLApi(res http.ResponseWriter, req *http.Req
 	}
 
 	res.Header().Set("Content-Type", "application/json")
-	res.WriteHeader(http.StatusCreated)
+	res.WriteHeader(status)
 	json.NewEncoder(res).Encode(ShortenResponse{Result: shortURL})
 }
 
@@ -151,6 +160,8 @@ func (s *ShortenerService) GetOriginalURL(res http.ResponseWriter, req *http.Req
 
 func (s *ShortenerService) GetShortURL(res http.ResponseWriter, req *http.Request) {
 	contentType := req.Header.Get(ContentTypeHeader)
+	status := http.StatusCreated
+
 	if !strings.Contains(strings.ToLower(contentType), TextContentType) {
 		http.Error(res, http.StatusText(http.StatusUnsupportedMediaType), http.StatusUnsupportedMediaType)
 		return
@@ -168,6 +179,12 @@ func (s *ShortenerService) GetShortURL(res http.ResponseWriter, req *http.Reques
 		shortURL = generateShortURL()
 		err = s.Storage.Save(string(body), shortURL)
 		if err != nil {
+			var URLErr *repository.URLError
+			if errors.As(err, &URLErr) {
+				res.Header().Set("Content-Type", "application/json")
+				status = http.StatusConflict
+				break
+			}
 			continue
 		}
 		break
@@ -180,7 +197,7 @@ func (s *ShortenerService) GetShortURL(res http.ResponseWriter, req *http.Reques
 	}
 
 	res.Header().Set(ContentTypeHeader, TextContentType)
-	res.WriteHeader(http.StatusCreated)
+	res.WriteHeader(status)
 	result, err := url.JoinPath(s.Config.ResultAddr, shortURL)
 	if err != nil {
 		http.Error(res, "failed to parse body", http.StatusBadRequest)

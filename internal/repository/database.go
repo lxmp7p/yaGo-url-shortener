@@ -27,15 +27,38 @@ func NewDatabaseCache(db *sql.DB) *DatabaseCache {
 	return cache
 }
 
-func (cache *DatabaseCache) Save(originalURL, shortURL string) error {
-	if _, exists := cache.Get(shortURL); exists == nil {
-		return ErrExist
-	}
+type URLError struct {
+	Short string
+}
 
-	query := "INSERT INTO urls (id, original, short) VALUES ($1, $2, $3)"
-	_, err := cache.db.Exec(query, uuid.New(), originalURL, shortURL)
+func (e *URLError) Error() string {
+	return OriginalUrlExist.Error()
+}
+
+func (cache *DatabaseCache) Save(originalURL, shortURL string) error {
+	query := `
+	INSERT INTO urls (id, original, short) 
+	VALUES ($1, $2, $3) 
+	ON CONFLICT (original) DO NOTHING 
+	`
+	result, err := cache.db.Exec(query, uuid.New(), originalURL, shortURL)
 	if err != nil {
 		return err
+	}
+
+	rows, _ := result.RowsAffected()
+	if rows == 0 {
+		var existing string
+		err := cache.db.QueryRow(
+			`SELECT short FROM urls WHERE original = $1`,
+			originalURL,
+		).Scan(&existing)
+
+		if err != nil {
+			return err
+		}
+
+		return &URLError{Short: existing}
 	}
 
 	return nil
