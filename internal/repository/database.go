@@ -32,7 +32,7 @@ type URLError struct {
 }
 
 func (e *URLError) Error() string {
-	return OriginalUrlExist.Error()
+	return ErrOriginalURLExists.Error()
 }
 
 func (cache *DatabaseCache) Save(originalURL, shortURL string) error {
