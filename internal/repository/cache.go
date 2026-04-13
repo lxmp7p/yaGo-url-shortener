@@ -2,6 +2,7 @@ package repository
 
 import (
 	"bufio"
+	"context"
 	"encoding/json"
 	"errors"
 	"os"
@@ -21,23 +22,23 @@ type Cache struct {
 }
 
 type Record struct {
-	UUID string `json:"uuid"`
-	ShortURL string `json:"short_url"`
+	UUID        string `json:"uuid"`
+	ShortURL    string `json:"short_url"`
 	OriginalURL string `json:"original_url"`
 }
 
-func NewCache(filepath string) *Cache {
+func NewCache(ctx context.Context, filepath string) *Cache {
 	cache := &Cache{
 		URLCache: make(map[string]string),
 		filename: filepath,
 	}
 
-	cache.Load(filepath)
+	cache.Load(ctx, filepath)
 
 	return cache
 }
 
-func (cache *Cache) Save(originalURL, shortURL string) error {
+func (cache *Cache) Save(ctx context.Context, originalURL, shortURL string) error {
 	cache.mu.Lock()
 	defer cache.mu.Unlock()
 
@@ -47,8 +48,8 @@ func (cache *Cache) Save(originalURL, shortURL string) error {
 	cache.URLCache[shortURL] = originalURL
 
 	record := Record{
-		UUID: uuid.New().String(),
-		ShortURL: shortURL,
+		UUID:        uuid.NewString(),
+		ShortURL:    shortURL,
 		OriginalURL: originalURL,
 	}
 
@@ -71,7 +72,7 @@ func (cache *Cache) Save(originalURL, shortURL string) error {
 	return nil
 }
 
-func (cache *Cache) Get(shortURL string) (string, error) {
+func (cache *Cache) Get(ctx context.Context, shortURL string) (string, error) {
 	cache.mu.RLock()
 	defer cache.mu.RUnlock()
 
@@ -83,14 +84,14 @@ func (cache *Cache) Get(shortURL string) (string, error) {
 	return originalURL, nil
 }
 
-func (cache *Cache) Load(shortURL string) (*Cache, error) {
+func (cache *Cache) Load(ctx context.Context, shortURL string) (*Cache, error) {
 	cache.mu.Lock()
 	defer cache.mu.Unlock()
 
 	file, err := os.OpenFile(cache.filename, os.O_RDONLY|os.O_CREATE, 0666)
-    if err != nil {
-        return &Cache{}, err
-    }
+	if err != nil {
+		return &Cache{}, err
+	}
 	defer file.Close()
 
 	scanner := bufio.NewScanner(file)

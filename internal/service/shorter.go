@@ -1,6 +1,7 @@
 package service
 
 import (
+	"context"
 	"database/sql"
 	"encoding/json"
 	"errors"
@@ -25,8 +26,8 @@ const (
 )
 
 type URLstorage interface {
-	Save(originalURL string, shortURL string) error
-	Get(shortURL string) (string, error)
+	Save(ctx context.Context, originalURL string, shortURL string) error
+	Get(ctx context.Context, shortURL string) (string, error)
 }
 
 type ShortenerService struct {
@@ -81,7 +82,7 @@ func (s *ShortenerService) GetShortURLBatchAPI(res http.ResponseWriter, req *htt
 
 		for attempt := 0; attempt < MaxShortAttempts; attempt++ {
 			shortURL = generateShortURL()
-			err := s.Storage.Save(item.OriginalURL, shortURL)
+			err := s.Storage.Save(req.Context(), item.OriginalURL, shortURL)
 			if err != nil {
 				continue
 			}
@@ -122,7 +123,7 @@ func (s *ShortenerService) GetShortURLApi(res http.ResponseWriter, req *http.Req
 	var shortURL string
 	for attempt := 0; attempt < MaxShortAttempts; attempt++ {
 		shortURL = generateShortURL()
-		err := s.Storage.Save(string(shortenRequest.URL), shortURL)
+		err := s.Storage.Save(req.Context(), string(shortenRequest.URL), shortURL)
 		if err != nil {
 			var URLErr *repository.URLError
 			if errors.As(err, &URLErr) {
@@ -150,7 +151,7 @@ func (s *ShortenerService) GetShortURLApi(res http.ResponseWriter, req *http.Req
 
 func (s *ShortenerService) GetOriginalURL(res http.ResponseWriter, req *http.Request) {
 	shortURL := chi.URLParam(req, "short_url")
-	originalURL, err := s.Storage.Get(shortURL)
+	originalURL, err := s.Storage.Get(req.Context(), shortURL)
 	if err != nil {
 		slog.Error(err.Error())
 		http.Error(res, http.StatusText(http.StatusNotFound), http.StatusNotFound)
@@ -179,7 +180,7 @@ func (s *ShortenerService) GetShortURL(res http.ResponseWriter, req *http.Reques
 	var shortURL string
 	for attempt := 0; attempt < MaxShortAttempts; attempt++ {
 		shortURL = generateShortURL()
-		err = s.Storage.Save(string(body), shortURL)
+		err = s.Storage.Save(req.Context(), string(body), shortURL)
 		if err != nil {
 			var URLErr *repository.URLError
 			if errors.As(err, &URLErr) {

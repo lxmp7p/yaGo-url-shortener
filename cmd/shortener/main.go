@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"database/sql"
 	"net/http"
 
@@ -46,9 +47,9 @@ func selectStorage(cfg config.Config, database *sql.DB) service.URLstorage {
 		return repository.NewDatabaseCache(database)
 	}
 	if cfg.FileStoragePath != "" {
-		return repository.NewCache(cfg.FileStoragePath)
+		return repository.NewCache(context.Background(), cfg.FileStoragePath)
 	}
-	return repository.NewCache("")
+	return repository.NewCache(context.Background(), "")
 }
 
 func runMigrations(DSN string, logger *logrus.Logger) {

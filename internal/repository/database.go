@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"context"
 	"database/sql"
 	"errors"
 	"sync"
@@ -35,7 +36,7 @@ func (e *URLError) Error() string {
 	return ErrOriginalURLExists.Error()
 }
 
-func (cache *DatabaseCache) Save(originalURL, shortURL string) error {
+func (cache *DatabaseCache) Save(ctx context.Context, originalURL, shortURL string) error {
 	query := `
 	INSERT INTO urls (id, original, short) 
 	VALUES ($1, $2, $3) 
@@ -64,7 +65,7 @@ func (cache *DatabaseCache) Save(originalURL, shortURL string) error {
 	return nil
 }
 
-func (cache *DatabaseCache) Get(shortURL string) (string, error) {
+func (cache *DatabaseCache) Get(ctx context.Context, shortURL string) (string, error) {
 	query := "SELECT original FROM urls WHERE short = $1"
 
 	var original string
@@ -78,7 +79,7 @@ func (cache *DatabaseCache) Get(shortURL string) (string, error) {
 	return original, nil
 }
 
-func (cache *DatabaseCache) Load(shortURL string) ([]*URL, error) {
+func (cache *DatabaseCache) Load(ctx context.Context, shortURL string) ([]*URL, error) {
 	query := "SELECT id, original, short FROM urls"
 
 	rows, err := cache.db.Query(query)

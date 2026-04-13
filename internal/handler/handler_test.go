@@ -2,6 +2,7 @@ package handler
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"io"
 	"log"
@@ -35,7 +36,7 @@ func TestGetShortURLHandler(t *testing.T) {
 			Addr:       "localhost:8080",
 			ResultAddr: "http://localhost:8080",
 		},
-		Storage: repository.NewCache(tmpFile.Name()),
+		Storage: repository.NewCache(context.Background(), tmpFile.Name()),
 		Logger:  logrus.New(),
 	}
 
