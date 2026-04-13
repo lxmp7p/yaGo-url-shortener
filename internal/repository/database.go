@@ -3,14 +3,11 @@ package repository
 import (
 	"context"
 	"database/sql"
-	"errors"
-	"sync"
 
 	"github.com/google/uuid"
 )
 
 type DatabaseCache struct {
-	mu sync.RWMutex
 	db *sql.DB
 }
 
@@ -72,7 +69,7 @@ func (cache *DatabaseCache) Get(ctx context.Context, shortURL string) (string, e
 	err := cache.db.QueryRow(query, shortURL).Scan(&original)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return "", errors.New(urlNotFound)
+			return "", ErrURLNotFound
 		}
 		return "", err
 	}
