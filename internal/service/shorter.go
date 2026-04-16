@@ -229,58 +229,25 @@ func (s *ShortenerService) CreateShortURL(w http.ResponseWriter, r *http.Request
 	w.Write([]byte(result))
 }
 
-// func (s *ShortenerService) GetUsersURLs(w http.ResponseWriter, r *http.Request) {
-// 	userID, ok := r.Context().Value("userID").(string)
-// 	if !ok {
-// 		http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
-// 		return
-// 	}
+func (s *ShortenerService) GetUsersURLs(w http.ResponseWriter, r *http.Request) {
+	userID, ok := r.Context().Value("userID").(string)
+	if !ok {
+		http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
+		return
+	}
 
-// 	contentType := req.Header.Get(ContentTypeHeader)
-// 	status := http.StatusCreated
+	URLs, err := s.Storage.GetByUserId(r.Context(), userID)
+	if err != nil {
+		slog.Error(err.Error())
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
 
-// 	if !strings.Contains(strings.ToLower(contentType), TextContentType) {
-// 		http.Error(res, http.StatusText(http.StatusUnsupportedMediaType), http.StatusUnsupportedMediaType)
-// 		return
-// 	}
+	if len(URLs) == 0 {
+		w.WriteHeader(http.StatusNoContent)
+		return
+	}
 
-// 	defer req.Body.Close()
-// 	body, err := io.ReadAll(req.Body)
-// 	if err != nil {
-// 		http.Error(res, "failed to parse body", http.StatusBadRequest)
-// 		return
-// 	}
-
-// 	var shortURL string
-// 	for attempt := 0; attempt < MaxShortAttempts; attempt++ {
-// 		shortURL = generateShortURL()
-// 		err = s.Storage.Save(req.Context(), string(body), shortURL)
-// 		if err != nil {
-// 			var URLErr *repository.URLError
-// 			if errors.As(err, &URLErr) {
-// 				res.Header().Set("Content-Type", "application/json")
-// 				status = http.StatusConflict
-// 				shortURL = URLErr.Short
-// 				err = nil
-// 				break
-// 			}
-// 			continue
-// 		}
-// 		break
-// 	}
-
-// 	if err != nil {
-// 		slog.Error(err.Error())
-// 		http.Error(res, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
-// 		return
-// 	}
-
-// 	res.Header().Set(ContentTypeHeader, TextContentType)
-// 	res.WriteHeader(status)
-// 	result, err := url.JoinPath(s.Config.ResultAddr, shortURL)
-// 	if err != nil {
-// 		http.Error(res, "failed to parse body", http.StatusBadRequest)
-// 		return
-// 	}
-// 	res.Write([]byte(result))
-// }
+	w.Header().Set(ContentTypeHeader, "application/json")
+	json.NewEncoder(w).Encode(URLs)
+}
