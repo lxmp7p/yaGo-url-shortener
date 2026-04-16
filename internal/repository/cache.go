@@ -25,6 +25,7 @@ type Record struct {
 	UUID        string `json:"uuid"`
 	ShortURL    string `json:"short_url"`
 	OriginalURL string `json:"original_url"`
+	UserID      string `json:"user_id"`
 }
 
 func NewCache(ctx context.Context, filepath string) *Cache {
@@ -38,7 +39,7 @@ func NewCache(ctx context.Context, filepath string) *Cache {
 	return cache
 }
 
-func (cache *Cache) Save(ctx context.Context, originalURL, shortURL string) error {
+func (cache *Cache) Save(ctx context.Context, originalURL, shortURL, userID string) error {
 	cache.mu.Lock()
 	defer cache.mu.Unlock()
 
@@ -51,6 +52,7 @@ func (cache *Cache) Save(ctx context.Context, originalURL, shortURL string) erro
 		UUID:        uuid.NewString(),
 		ShortURL:    shortURL,
 		OriginalURL: originalURL,
+		UserID:      userID,
 	}
 
 	data, err := json.Marshal(record)

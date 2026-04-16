@@ -33,9 +33,11 @@ func InitRoutes(app App) chi.Router {
 		Storage:  app.Storage,
 		Database: app.Database,
 	}
+	handler := NewHandler(shortenerService)
 	apiRouter := chi.NewRouter()
 	apiRouter.Use(CompressMiddleware())
 	apiRouter.Use(LoggingMiddleware(app.Logger))
+	apiRouter.Use(handler.AuthMiddleware)
 
 	apiRouter.Mount("/", ShortenerRoutes(shortenerService))
 	return apiRouter

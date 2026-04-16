@@ -7,6 +7,7 @@ import (
 
 const (
 	MIN_PASS_LENGTH = 4
+	USER_ID_CONTEXT = "userID"
 )
 
 func generateShortURL() string {
