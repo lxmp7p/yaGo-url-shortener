@@ -7,17 +7,16 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestNewCache(t *testing.T) {
 	tests := []struct {
-		name     string // description of this test case
-		filepath string
-		want     *Cache
+		name string // description of this test case
+		want *Cache
 	}{
 		{
-			name:     "success new cache",
-			filepath: "tmp",
+			name: "success new cache",
 			want: &Cache{
 				URLCache: make(map[string]string),
 				filename: "tmp",
@@ -33,8 +32,12 @@ func TestNewCache(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := NewCache(context.Background(), tt.filepath)
-			assert.Equal(t, got, tt.want)
+			tmpFile, err := os.CreateTemp("", "cache")
+			require.NoError(t, err)
+			defer os.Remove(tmpFile.Name())
+			got := NewCache(context.Background(), tmpFile.Name())
+			assert.Equal(t, tmpFile.Name(), got.filename)
+			assert.Empty(t, got.URLCache)
 		})
 	}
 }
