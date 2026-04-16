@@ -18,14 +18,14 @@ func TestNewCache(t *testing.T) {
 		{
 			name: "success new cache",
 			want: &Cache{
-				URLCache: make(map[string]string),
+				URLCache: make(map[string]URL),
 				filename: "tmp",
 			},
 		},
 		{
 			name: "success new cache",
 			want: &Cache{
-				URLCache: make(map[string]string),
+				URLCache: make(map[string]URL),
 				filename: "",
 			},
 		},

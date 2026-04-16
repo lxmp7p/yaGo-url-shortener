@@ -11,12 +11,6 @@ type DatabaseCache struct {
 	db *sql.DB
 }
 
-type URL struct {
-	uuid     uuid.UUID
-	original string
-	short    string
-}
-
 func NewDatabaseCache(db *sql.DB) *DatabaseCache {
 	cache := &DatabaseCache{
 		db: db,
@@ -74,6 +68,31 @@ func (cache *DatabaseCache) Get(ctx context.Context, shortURL string) (string, e
 		return "", err
 	}
 	return original, nil
+}
+
+func (cache *DatabaseCache) GetByUserId(ctx context.Context, owner_id string) ([]URL, error) {
+	query := "SELECT id, original, short FROM urls WHEREE owner_id = $1"
+
+	rows, err := cache.db.Query(query, owner_id)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var result []URL
+	for rows.Next() {
+		var u URL
+		if err = rows.Scan(&u.uuid, &u.original, &u.short); err != nil {
+			return nil, err
+		}
+		result = append(result, u)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return result, nil
 }
 
 func (cache *DatabaseCache) Load(ctx context.Context, shortURL string, userID string) ([]*URL, error) {

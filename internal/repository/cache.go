@@ -16,7 +16,7 @@ var (
 )
 
 type Cache struct {
-	URLCache map[string]string
+	URLCache map[string]URL
 	mu       sync.RWMutex
 	filename string
 }
@@ -28,9 +28,16 @@ type Record struct {
 	UserID      string `json:"user_id"`
 }
 
+type URL struct {
+	uuid     uuid.UUID
+	original string `json:"short_url"`
+	short    string `json:"original_url"`
+	userId   string `json:"user_id"`
+}
+
 func NewCache(ctx context.Context, filepath string) *Cache {
 	cache := &Cache{
-		URLCache: make(map[string]string),
+		URLCache: make(map[string]URL),
 		filename: filepath,
 	}
 
@@ -46,7 +53,7 @@ func (cache *Cache) Save(ctx context.Context, originalURL, shortURL, userID stri
 	if _, exists := cache.URLCache[shortURL]; exists {
 		return ErrExist
 	}
-	cache.URLCache[shortURL] = originalURL
+	cache.URLCache[shortURL] = URL{original: originalURL}
 
 	record := Record{
 		UUID:        uuid.NewString(),
@@ -78,12 +85,25 @@ func (cache *Cache) Get(ctx context.Context, shortURL string) (string, error) {
 	cache.mu.RLock()
 	defer cache.mu.RUnlock()
 
-	originalURL, ok := cache.URLCache[shortURL]
+	URL, ok := cache.URLCache[shortURL]
 	if !ok {
 		return "", ErrURLNotFound
 	}
 
-	return originalURL, nil
+	return URL.original, nil
+}
+
+func (cache *Cache) GetByUserId(ctx context.Context, userID string) ([]URL, error) {
+	cache.mu.RLock()
+	defer cache.mu.RUnlock()
+	var urls []URL
+	for _, v := range cache.URLCache {
+		if v.userId == userID {
+			urls = append(urls, v)
+		}
+	}
+
+	return urls, nil
 }
 
 func (cache *Cache) Load(ctx context.Context, shortURL string) (*Cache, error) {
@@ -103,7 +123,7 @@ func (cache *Cache) Load(ctx context.Context, shortURL string) (*Cache, error) {
 		if err := json.Unmarshal([]byte(line), &record); err != nil {
 			continue
 		}
-		cache.URLCache[record.ShortURL] = record.OriginalURL
+		cache.URLCache[record.ShortURL] = URL{original: record.OriginalURL}
 	}
 	return cache, nil
 }

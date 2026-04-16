@@ -28,6 +28,7 @@ const (
 type URLstorage interface {
 	Save(ctx context.Context, originalURL string, shortURL string, userID string) error
 	Get(ctx context.Context, shortURL string) (string, error)
+	GetByUserId(ctx context.Context, userID string) ([]repository.URL, error)
 }
 
 type ShortenerService struct {
