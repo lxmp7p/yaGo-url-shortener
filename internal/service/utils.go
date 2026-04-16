@@ -1,6 +1,13 @@
 package service
 
-import "math/rand"
+import (
+	"math/rand"
+	"net/http"
+)
+
+const (
+	MIN_PASS_LENGTH = 4
+)
 
 func generateShortURL() string {
 	b := make([]byte, 8)
@@ -11,3 +18,11 @@ func generateShortURL() string {
 	return string(b)
 }
 
+func GenerateUserCookie(userID, signature string) *http.Cookie {
+	return &http.Cookie{
+		Name:     "user",
+		Value:    userID + ":" + signature,
+		Path:     "/",
+		HttpOnly: true,
+	}
+}

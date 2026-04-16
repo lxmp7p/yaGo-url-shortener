@@ -9,6 +9,16 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+type Handler struct {
+	Service *service.ShortenerService
+}
+
+func NewHandler(s *service.ShortenerService) *Handler {
+	return &Handler{
+		Service: s,
+	}
+}
+
 type App struct {
 	Config   config.Config
 	Storage  service.URLstorage

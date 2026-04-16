@@ -2,11 +2,14 @@ package handler
 
 import (
 	"compress/gzip"
+	"context"
 	"fmt"
 	"net/http"
 	"strings"
 	"time"
 
+	"github.com/google/uuid"
+	"github.com/lxmp7p/yaGo-url-shortener/internal/service"
 	"github.com/sirupsen/logrus"
 )
 
@@ -99,4 +102,35 @@ func CompressMiddleware() func(http.Handler) http.Handler {
 			h.ServeHTTP(w, r)
 		})
 	}
+}
+
+func (h *Handler) AuthMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		cookie, err := r.Cookie("user")
+		if err != nil {
+			userID := uuid.NewString()
+			signature := h.Service.Sign(userID)
+
+			http.SetCookie(w, service.GenerateUserCookie(userID, signature))
+
+			ctx := context.WithValue(r.Context(), "userID", userID)
+			next.ServeHTTP(w, r.WithContext(ctx))
+			return
+		}
+
+		parts := strings.Split(cookie.Value, ":")
+		if len(parts) != 2 {
+			http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
+			return
+		}
+
+		userID, signature := parts[0], parts[1]
+
+		if !h.Service.Verify(userID, signature) {
+			http.SetCookie(w, service.GenerateUserCookie(userID, signature))
+		}
+
+		ctx := context.WithValue(r.Context(), "userID", userID)
+		next.ServeHTTP(w, r.WithContext(ctx))
+	})
 }

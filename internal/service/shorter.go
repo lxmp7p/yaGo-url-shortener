@@ -35,6 +35,7 @@ type ShortenerService struct {
 	Storage  URLstorage
 	Logger   logrus.Logger
 	Database *sql.DB
+	secret   []byte
 }
 
 type ShortenRequest struct {
@@ -62,7 +63,7 @@ type Shorten struct {
 	ShortURL string `json:"short_url"`
 }
 
-func (s *ShortenerService) GetShortURLBatchAPI(res http.ResponseWriter, req *http.Request) {
+func (s *ShortenerService) CreateShortURLBatchAPI(res http.ResponseWriter, req *http.Request) {
 	var request []Original
 
 	if err := json.NewDecoder(req.Body).Decode(&request); err != nil {
@@ -106,7 +107,7 @@ func (s *ShortenerService) GetShortURLBatchAPI(res http.ResponseWriter, req *htt
 	json.NewEncoder(res).Encode(response)
 }
 
-func (s *ShortenerService) GetShortURLApi(res http.ResponseWriter, req *http.Request) {
+func (s *ShortenerService) CreateShortURLApi(res http.ResponseWriter, req *http.Request) {
 	var shortenRequest ShortenRequest
 	status := http.StatusCreated
 
@@ -161,7 +162,7 @@ func (s *ShortenerService) GetOriginalURL(res http.ResponseWriter, req *http.Req
 	res.WriteHeader(http.StatusTemporaryRedirect)
 }
 
-func (s *ShortenerService) GetShortURL(res http.ResponseWriter, req *http.Request) {
+func (s *ShortenerService) CreateShortURL(res http.ResponseWriter, req *http.Request) {
 	contentType := req.Header.Get(ContentTypeHeader)
 	status := http.StatusCreated
 
@@ -210,3 +211,59 @@ func (s *ShortenerService) GetShortURL(res http.ResponseWriter, req *http.Reques
 	}
 	res.Write([]byte(result))
 }
+
+// func (s *ShortenerService) GetUsersURLs(w http.ResponseWriter, r *http.Request) {
+// 	userID, ok := r.Context().Value("userID").(string)
+// 	if !ok {
+// 		http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
+// 		return
+// 	}
+
+// 	contentType := req.Header.Get(ContentTypeHeader)
+// 	status := http.StatusCreated
+
+// 	if !strings.Contains(strings.ToLower(contentType), TextContentType) {
+// 		http.Error(res, http.StatusText(http.StatusUnsupportedMediaType), http.StatusUnsupportedMediaType)
+// 		return
+// 	}
+
+// 	defer req.Body.Close()
+// 	body, err := io.ReadAll(req.Body)
+// 	if err != nil {
+// 		http.Error(res, "failed to parse body", http.StatusBadRequest)
+// 		return
+// 	}
+
+// 	var shortURL string
+// 	for attempt := 0; attempt < MaxShortAttempts; attempt++ {
+// 		shortURL = generateShortURL()
+// 		err = s.Storage.Save(req.Context(), string(body), shortURL)
+// 		if err != nil {
+// 			var URLErr *repository.URLError
+// 			if errors.As(err, &URLErr) {
+// 				res.Header().Set("Content-Type", "application/json")
+// 				status = http.StatusConflict
+// 				shortURL = URLErr.Short
+// 				err = nil
+// 				break
+// 			}
+// 			continue
+// 		}
+// 		break
+// 	}
+
+// 	if err != nil {
+// 		slog.Error(err.Error())
+// 		http.Error(res, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+// 		return
+// 	}
+
+// 	res.Header().Set(ContentTypeHeader, TextContentType)
+// 	res.WriteHeader(status)
+// 	result, err := url.JoinPath(s.Config.ResultAddr, shortURL)
+// 	if err != nil {
+// 		http.Error(res, "failed to parse body", http.StatusBadRequest)
+// 		return
+// 	}
+// 	res.Write([]byte(result))
+// }
