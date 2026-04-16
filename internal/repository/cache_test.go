@@ -64,8 +64,8 @@ func TestCache_Save(t *testing.T) {
 			defer os.Remove(tmpFile.Name())
 			defer tmpFile.Close()
 
-			cache := NewCache(context.Background(), tt.filepath)
-			gotErr := cache.Save(context.Background(), tt.originalURL, tt.shortURL, "test")
+			cache := NewCache(context.Background(), tmpFile.Name())
+			gotErr := cache.Save(context.Background(), tt.originalURL, tt.shortURL, "userId")
 			if gotErr != nil {
 				if !tt.wantErr {
 					t.Errorf("Save() failed: %v", gotErr)
