@@ -29,8 +29,8 @@ func (e *URLError) Error() string {
 
 func (cache *DatabaseCache) Save(ctx context.Context, originalURL, shortURL string, userID string) error {
 	query := `
-	INSERT INTO urls (id, original, short) 
-	VALUES ($1, $2, $3) 
+	INSERT INTO urls (id, original, short, owner_id) 
+	VALUES ($1, $2, $3, $4) 
 	ON CONFLICT (original) DO NOTHING 
 	`
 	result, err := cache.db.Exec(query, uuid.New(), originalURL, shortURL, userID)
