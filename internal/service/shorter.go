@@ -239,6 +239,7 @@ func (s *ShortenerService) GetUsersURLs(w http.ResponseWriter, r *http.Request) 
 	URLs, err := s.Storage.GetByUserId(r.Context(), userID)
 	if err != nil {
 		slog.Error(err.Error())
+		w.Header().Set(ContentTypeHeader, err.Error())
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}
