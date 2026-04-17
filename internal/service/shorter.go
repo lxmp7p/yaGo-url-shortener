@@ -230,7 +230,7 @@ func (s *ShortenerService) CreateShortURL(w http.ResponseWriter, r *http.Request
 }
 
 func (s *ShortenerService) GetUsersURLs(w http.ResponseWriter, r *http.Request) {
-	userID, ok := r.Context().Value("userID").(string)
+	userID, ok := r.Context().Value(UserIDKey).(us)
 	if !ok {
 		http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
 		return

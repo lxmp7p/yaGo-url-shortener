@@ -30,8 +30,8 @@ type Record struct {
 
 type URL struct {
 	uuid     uuid.UUID
-	Original string `json:"short_url"`
-	Short    string `json:"original_url"`
+	Original string `json:"original_url"`
+	Short    string `json:"short_url"`
 	UserID   string `json:"user_id"`
 }
 
