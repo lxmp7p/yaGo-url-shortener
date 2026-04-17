@@ -32,7 +32,7 @@ type URL struct {
 	uuid     uuid.UUID
 	Original string `json:"short_url"`
 	Short    string `json:"original_url"`
-	UserId   string `json:"user_id"`
+	UserID   string `json:"user_id"`
 }
 
 func NewCache(ctx context.Context, filepath string) *Cache {
@@ -57,7 +57,7 @@ func (cache *Cache) Save(ctx context.Context, originalURL, shortURL, userID stri
 	cache.URLCache[shortURL] = URL{
 		Original: originalURL,
 		Short:    shortURL,
-		UserId:   userID,
+		UserID:   userID,
 	}
 
 	record := Record{
@@ -103,7 +103,7 @@ func (cache *Cache) GetByUserID(ctx context.Context, userID string) ([]URL, erro
 	defer cache.mu.RUnlock()
 	var urls []URL
 	for _, v := range cache.URLCache {
-		if v.UserId == userID {
+		if v.UserID == userID {
 			urls = append(urls, v)
 		}
 	}

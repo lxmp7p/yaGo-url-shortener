@@ -139,10 +139,10 @@ func TestCache_GetByUserID(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			cache := NewCache(context.Background(), tt.filepath)
 			cache.URLCache = map[string]URL{
-				"1": {Short: "a.ru", Original: "yandex.ru", UserId: "user1"},
-				"2": {Short: "b.ru", Original: "yandex.ru", UserId: "user1"},
-				"3": {Short: "c.ru", Original: "yandex.ru", UserId: "user1"},
-				"4": {Short: "d.ru", Original: "yandex.ru", UserId: "user2"},
+				"1": {Short: "a.ru", Original: "yandex.ru", UserID: "user1"},
+				"2": {Short: "b.ru", Original: "yandex.ru", UserID: "user1"},
+				"3": {Short: "c.ru", Original: "yandex.ru", UserID: "user1"},
+				"4": {Short: "d.ru", Original: "yandex.ru", UserID: "user2"},
 			}
 			got, _ := cache.GetByUserID(context.Background(), "user1")
 			shorts := []string{got[0].Short, got[1].Short, got[2].Short}

@@ -33,7 +33,7 @@ func (cache *DatabaseCache) Save(ctx context.Context, originalURL, shortURL stri
 	VALUES ($1, $2, $3) 
 	ON CONFLICT (original) DO NOTHING 
 	`
-	result, err := cache.db.Exec(query, uuid.New(), originalURL, shortURL)
+	result, err := cache.db.Exec(query, uuid.New(), originalURL, shortURL, userID)
 	if err != nil {
 		return err
 	}
