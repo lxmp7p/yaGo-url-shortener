@@ -28,7 +28,7 @@ const (
 type URLstorage interface {
 	Save(ctx context.Context, originalURL string, shortURL string, userID string) error
 	Get(ctx context.Context, shortURL string) (string, error)
-	GetByUserId(ctx context.Context, userID string) ([]repository.URL, error)
+	GetByUserID(ctx context.Context, userID string) ([]repository.URL, error)
 }
 
 type ShortenerService struct {
@@ -65,7 +65,7 @@ type Shorten struct {
 }
 
 func (s *ShortenerService) CreateShortURLBatchAPI(w http.ResponseWriter, r *http.Request) {
-	userID, ok := r.Context().Value(USER_ID_CONTEXT).(string)
+	userID, ok := r.Context().Value(UserIDKey).(string)
 	if !ok {
 		http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
 		return
@@ -114,7 +114,7 @@ func (s *ShortenerService) CreateShortURLBatchAPI(w http.ResponseWriter, r *http
 }
 
 func (s *ShortenerService) CreateShortURLApi(w http.ResponseWriter, r *http.Request) {
-	userID, ok := r.Context().Value(USER_ID_CONTEXT).(string)
+	userID, ok := r.Context().Value(UserIDKey).(string)
 	if !ok {
 		http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
 		return
@@ -174,7 +174,7 @@ func (s *ShortenerService) GetOriginalURL(res http.ResponseWriter, req *http.Req
 }
 
 func (s *ShortenerService) CreateShortURL(w http.ResponseWriter, r *http.Request) {
-	userID, ok := r.Context().Value(USER_ID_CONTEXT).(string)
+	userID, ok := r.Context().Value(UserIDKey).(string)
 	if !ok {
 		http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
 		return
@@ -236,10 +236,9 @@ func (s *ShortenerService) GetUsersURLs(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	URLs, err := s.Storage.GetByUserId(r.Context(), userID)
+	URLs, err := s.Storage.GetByUserID(r.Context(), userID)
 	if err != nil {
 		slog.Error(err.Error())
-		w.Header().Set(ContentTypeHeader, err.Error())
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}

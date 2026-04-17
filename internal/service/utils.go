@@ -5,10 +5,9 @@ import (
 	"net/http"
 )
 
-const (
-	MIN_PASS_LENGTH = 4
-	USER_ID_CONTEXT = "userID"
-)
+type contextKey string
+
+const UserIDKey contextKey = "userID"
 
 func generateShortURL() string {
 	b := make([]byte, 8)

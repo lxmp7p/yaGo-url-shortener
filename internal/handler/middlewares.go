@@ -113,7 +113,7 @@ func (h *Handler) AuthMiddleware(next http.Handler) http.Handler {
 
 			http.SetCookie(w, service.GenerateUserCookie(userID, signature))
 
-			ctx := context.WithValue(r.Context(), service.USER_ID_CONTEXT, userID)
+			ctx := context.WithValue(r.Context(), service.UserIDKey, userID)
 			next.ServeHTTP(w, r.WithContext(ctx))
 			return
 		}
@@ -132,7 +132,7 @@ func (h *Handler) AuthMiddleware(next http.Handler) http.Handler {
 			http.SetCookie(w, service.GenerateUserCookie(userID, signature))
 		}
 
-		ctx := context.WithValue(r.Context(), service.USER_ID_CONTEXT, userID)
+		ctx := context.WithValue(r.Context(), service.UserIDKey, userID)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }

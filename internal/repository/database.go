@@ -70,10 +70,10 @@ func (cache *DatabaseCache) Get(ctx context.Context, shortURL string) (string, e
 	return original, nil
 }
 
-func (cache *DatabaseCache) GetByUserId(ctx context.Context, owner_id string) ([]URL, error) {
+func (cache *DatabaseCache) GetByUserID(ctx context.Context, ownerID string) ([]URL, error) {
 	query := "SELECT id, original, short FROM urls WHERE owner_id = $1"
 
-	rows, err := cache.db.Query(query, owner_id)
+	rows, err := cache.db.Query(query, ownerID)
 	if err != nil {
 		return nil, err
 	}
@@ -82,7 +82,7 @@ func (cache *DatabaseCache) GetByUserId(ctx context.Context, owner_id string) ([
 	var result []URL
 	for rows.Next() {
 		var u URL
-		if err = rows.Scan(&u.uuid, &u.original, &u.short); err != nil {
+		if err = rows.Scan(&u.uuid, &u.Original, &u.Short); err != nil {
 			return nil, err
 		}
 		result = append(result, u)
@@ -107,7 +107,7 @@ func (cache *DatabaseCache) Load(ctx context.Context, shortURL string, userID st
 	var result []*URL
 	for rows.Next() {
 		var u URL
-		if err = rows.Scan(&u.uuid, &u.original, &u.short); err != nil {
+		if err = rows.Scan(&u.uuid, &u.Original, &u.Short); err != nil {
 			return nil, err
 		}
 		result = append(result, &u)

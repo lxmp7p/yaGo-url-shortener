@@ -30,9 +30,9 @@ type Record struct {
 
 type URL struct {
 	uuid     uuid.UUID
-	original string `json:"short_url"`
-	short    string `json:"original_url"`
-	userId   string `json:"user_id"`
+	Original string `json:"short_url"`
+	Short    string `json:"original_url"`
+	UserId   string `json:"user_id"`
 }
 
 func NewCache(ctx context.Context, filepath string) *Cache {
@@ -55,9 +55,9 @@ func (cache *Cache) Save(ctx context.Context, originalURL, shortURL, userID stri
 	}
 
 	cache.URLCache[shortURL] = URL{
-		original: originalURL,
-		short:    shortURL,
-		userId:   userID,
+		Original: originalURL,
+		Short:    shortURL,
+		UserId:   userID,
 	}
 
 	record := Record{
@@ -95,15 +95,15 @@ func (cache *Cache) Get(ctx context.Context, shortURL string) (string, error) {
 		return "", ErrURLNotFound
 	}
 
-	return URL.original, nil
+	return URL.Original, nil
 }
 
-func (cache *Cache) GetByUserId(ctx context.Context, userID string) ([]URL, error) {
+func (cache *Cache) GetByUserID(ctx context.Context, userID string) ([]URL, error) {
 	cache.mu.RLock()
 	defer cache.mu.RUnlock()
 	var urls []URL
 	for _, v := range cache.URLCache {
-		if v.userId == userID {
+		if v.UserId == userID {
 			urls = append(urls, v)
 		}
 	}
@@ -128,7 +128,7 @@ func (cache *Cache) Load(ctx context.Context, shortURL string) (*Cache, error) {
 		if err := json.Unmarshal([]byte(line), &record); err != nil {
 			continue
 		}
-		cache.URLCache[record.ShortURL] = URL{original: record.OriginalURL}
+		cache.URLCache[record.ShortURL] = URL{Original: record.OriginalURL}
 	}
 	return cache, nil
 }
