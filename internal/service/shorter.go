@@ -243,10 +243,10 @@ func (s *ShortenerService) GetUsersURLs(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	for _, u := range URLs {
+	for i, u := range URLs {
 		shortURL, err := url.JoinPath(s.Config.ResultAddr, u.Short)
 		if err != nil {
-			u.Short = shortURL
+			URLs[i].Short = shortURL
 		}
 	}
 
