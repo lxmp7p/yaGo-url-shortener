@@ -243,6 +243,13 @@ func (s *ShortenerService) GetUsersURLs(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
+	for _, u := range URLs {
+		shortURL, err := url.JoinPath(s.Config.ResultAddr, u.Short)
+		if err != nil {
+			u.Short = shortURL
+		}
+	}
+
 	if len(URLs) == 0 {
 		w.WriteHeader(http.StatusNoContent)
 		return
