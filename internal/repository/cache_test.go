@@ -124,3 +124,32 @@ func TestCache_Get(t *testing.T) {
 		})
 	}
 }
+
+func TestCache_GetByUserId(t *testing.T) {
+	tests := []struct {
+		name     string
+		filepath string
+		userID   string
+		want     []URL
+		wantErr  bool
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			cache := NewCache(context.Background(), tt.filepath)
+			cache.URLCache = map[string]URL{
+				"1": {short: "a.ru", original: "yandex.ru", userId: "user1"},
+				"2": {short: "b.ru", original: "yandex.ru", userId: "user1"},
+				"3": {short: "c.ru", original: "yandex.ru", userId: "user1"},
+				"4": {short: "d.ru", original: "yandex.ru", userId: "user2"},
+			}
+			got, _ := cache.GetByUserId(context.Background(), "user1")
+			shorts := []string{got[0].short, got[1].short, got[2].short}
+			assert.Contains(t, shorts, "a.ru")
+			assert.Contains(t, shorts, "a.ru")
+			assert.Contains(t, shorts, "a.ru")
+			assert.NotContains(t, shorts, "d.ru")
+		})
+	}
+}

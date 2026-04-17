@@ -53,7 +53,12 @@ func (cache *Cache) Save(ctx context.Context, originalURL, shortURL, userID stri
 	if _, exists := cache.URLCache[shortURL]; exists {
 		return ErrExist
 	}
-	cache.URLCache[shortURL] = URL{original: originalURL}
+
+	cache.URLCache[shortURL] = URL{
+		original: originalURL,
+		short:    shortURL,
+		userId:   userID,
+	}
 
 	record := Record{
 		UUID:        uuid.NewString(),
