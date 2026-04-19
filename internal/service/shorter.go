@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+	"time"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/lxmp7p/yaGo-url-shortener/internal/config"
@@ -25,10 +26,20 @@ const (
 	Chars             = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 )
 
+var (
+	deleteCh = make(chan DeleteTask, 1000)
+)
+
+type DeleteTask struct {
+	UserID string
+	IDs    []string
+}
+
 type URLstorage interface {
 	Save(ctx context.Context, originalURL string, shortURL string, userID string) error
 	Get(ctx context.Context, shortURL string) (string, error)
 	GetByUserID(ctx context.Context, userID string) ([]repository.URL, error)
+	Delete(ctx context.Context, userID string, IDs []string) error
 }
 
 type ShortenerService struct {
@@ -257,4 +268,47 @@ func (s *ShortenerService) GetUsersURLs(w http.ResponseWriter, r *http.Request) 
 
 	w.Header().Set(ContentTypeHeader, "application/json")
 	json.NewEncoder(w).Encode(URLs)
+}
+
+func (s *ShortenerService) DeleteUsersURLs(w http.ResponseWriter, r *http.Request) {
+	userID, ok := r.Context().Value(UserIDKey).(string)
+	if !ok {
+		http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
+		return
+	}
+
+	var ids []string
+	if err := json.NewDecoder(r.Body).Decode(&ids); err != nil {
+		http.Error(w, "Invalid JSON", http.StatusBadRequest)
+		return
+	}
+
+	deleteCh <- DeleteTask{
+		UserID: userID,
+		IDs:    ids,
+	}
+	w.WriteHeader(http.StatusAccepted)
+}
+
+func (s *ShortenerService) StartDeleteWorker() {
+	go func() {
+		ticker := time.NewTicker(400 * time.Microsecond)
+		defer ticker.Stop()
+
+		batch := make(map[string][]string)
+
+		for {
+			select {
+			case task := <-deleteCh:
+				batch[task.UserID] = append(batch[task.UserID], task.IDs...)
+			case <-ticker.C:
+				for userID, ids := range batch {
+					if len(ids) > 0 {
+						s.Storage.Delete(context.Background(), userID, ids)
+					}
+				}
+				batch = make(map[string][]string)
+			}
+		}
+	}()
 }

@@ -13,6 +13,7 @@ func ShortenerRoutes(shortenerService *service.ShortenerService) chi.Router {
 	r.Post("/api/shorten", shortenerService.CreateShortURLApi)
 	r.Post("/api/shorten/batch", shortenerService.CreateShortURLBatchAPI)
 	r.Get("/api/user/urls", shortenerService.GetUsersURLs)
+	r.Delete("/api/user/urls", shortenerService.DeleteUsersURLs)
 
 	r.Get("/ping", shortenerService.PingDatabase)
 	return r

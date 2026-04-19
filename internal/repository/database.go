@@ -119,3 +119,18 @@ func (cache *DatabaseCache) Load(ctx context.Context, shortURL string, userID st
 
 	return result, nil
 }
+
+func (cache *DatabaseCache) Delete(ctx context.Context, userID string, IDs []string) error {
+	query := "UPDATE urls SET is_deleted = TRUE WHERE user_id = $1 AND short_url = ANY($2)"
+
+	rows, err := cache.db.Query(query, userID, IDs)
+	if err != nil {
+		return err
+	}
+	defer rows.Close()
+
+	if err := rows.Err(); err != nil {
+		return err
+	}
+	return err
+}

@@ -22,10 +22,11 @@ type Cache struct {
 }
 
 type URL struct {
-	UUID     string `json:"id"`
-	Original string `json:"original_url"`
-	Short    string `json:"short_url"`
-	UserID   string `json:"user_id"`
+	UUID        string `json:"id"`
+	Original    string `json:"original_url"`
+	Short       string `json:"short_url"`
+	UserID      string `json:"user_id"`
+	DeletedFlag bool   `json:"is_deleted"`
 }
 
 func NewCache(ctx context.Context, filepath string) *Cache {
@@ -124,4 +125,8 @@ func (cache *Cache) Load(ctx context.Context, shortURL string) (*Cache, error) {
 		cache.URLCache[record.Short] = URL{Original: record.Original}
 	}
 	return cache, nil
+}
+
+func (cache *Cache) Delete(ctx context.Context, shortURL string, IDs []string) error {
+	return nil
 }

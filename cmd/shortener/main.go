@@ -36,6 +36,7 @@ func main() {
 		Logger:   logger,
 		Database: database,
 	})
+
 	logger.Infof("Starting server on %s", cfg.Addr)
 	err := http.ListenAndServe(cfg.Addr, r)
 	logger.Fatalf("Server stopped: %v", err)
