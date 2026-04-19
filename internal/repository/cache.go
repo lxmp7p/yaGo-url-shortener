@@ -21,15 +21,8 @@ type Cache struct {
 	filename string
 }
 
-type Record struct {
-	UUID        string `json:"uuid"`
-	ShortURL    string `json:"short_url"`
-	OriginalURL string `json:"original_url"`
-	UserID      string `json:"user_id"`
-}
-
 type URL struct {
-	uuid     uuid.UUID
+	UUID     string `json:"id"`
 	Original string `json:"original_url"`
 	Short    string `json:"short_url"`
 	UserID   string `json:"user_id"`
@@ -60,11 +53,11 @@ func (cache *Cache) Save(ctx context.Context, originalURL, shortURL, userID stri
 		UserID:   userID,
 	}
 
-	record := Record{
-		UUID:        uuid.NewString(),
-		ShortURL:    shortURL,
-		OriginalURL: originalURL,
-		UserID:      userID,
+	record := URL{
+		UUID:     uuid.NewString(),
+		Short:    shortURL,
+		Original: originalURL,
+		UserID:   userID,
 	}
 
 	data, err := json.Marshal(record)
@@ -124,11 +117,11 @@ func (cache *Cache) Load(ctx context.Context, shortURL string) (*Cache, error) {
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
 		line := scanner.Text()
-		record := Record{}
+		record := URL{}
 		if err := json.Unmarshal([]byte(line), &record); err != nil {
 			continue
 		}
-		cache.URLCache[record.ShortURL] = URL{Original: record.OriginalURL}
+		cache.URLCache[record.Short] = URL{Original: record.Original}
 	}
 	return cache, nil
 }

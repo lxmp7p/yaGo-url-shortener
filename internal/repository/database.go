@@ -82,7 +82,7 @@ func (cache *DatabaseCache) GetByUserID(ctx context.Context, ownerID string) ([]
 	var result []URL
 	for rows.Next() {
 		var u URL
-		if err = rows.Scan(&u.uuid, &u.Original, &u.Short); err != nil {
+		if err = rows.Scan(&u.UUID, &u.Original, &u.Short); err != nil {
 			return nil, err
 		}
 		result = append(result, u)
@@ -107,7 +107,7 @@ func (cache *DatabaseCache) Load(ctx context.Context, shortURL string, userID st
 	var result []*URL
 	for rows.Next() {
 		var u URL
-		if err = rows.Scan(&u.uuid, &u.Original, &u.Short); err != nil {
+		if err = rows.Scan(&u.UUID, &u.Original, &u.Short); err != nil {
 			return nil, err
 		}
 		result = append(result, &u)
