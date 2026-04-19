@@ -129,7 +129,7 @@ func (cache *DatabaseCache) Load(ctx context.Context, shortURL string, userID st
 }
 
 func (cache *DatabaseCache) Delete(ctx context.Context, userID string, IDs []string) error {
-	query := "UPDATE urls SET is_deleted = TRUE WHERE user_id = $1 AND short_url = ANY($2)"
+	query := "UPDATE urls SET is_deleted = TRUE WHERE owner_id = $1 AND short = ANY($2)"
 
 	_, err := cache.db.Exec(query, userID, IDs)
 	if err != nil {
