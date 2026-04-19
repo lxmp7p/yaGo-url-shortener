@@ -178,7 +178,7 @@ func (s *ShortenerService) GetOriginalURL(w http.ResponseWriter, r *http.Request
 	if err != nil {
 		slog.Error(err.Error())
 		if errors.Is(err, repository.ErrURLDeleted) {
-			http.NotFound(w, r)
+			w.WriteHeader(http.StatusGone)
 			return
 		}
 		http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
@@ -296,7 +296,7 @@ func (s *ShortenerService) DeleteUsersURLs(w http.ResponseWriter, r *http.Reques
 
 func (s *ShortenerService) StartDeleteWorker() {
 	go func() {
-		ticker := time.NewTicker(400 * time.Microsecond)
+		ticker := time.NewTicker(200 * time.Millisecond)
 		defer ticker.Stop()
 
 		batch := make(map[string][]string)
