@@ -96,27 +96,7 @@ func CompressMiddleware() func(http.Handler) http.Handler {
 				defer gz.Close()
 			}
 
-			// ПРИ ВКЛЮЧЕНИИ КОДА НИЖЕ ПАДАЮТ ТЕСТЫ ДЛЯ iter7
-			// МБ Я НЕ ПОНЯЛ ЗАДАНИЯ И ТАК И НУЖНО, ПОТОМУ ЧТО БЕЗ ЭТОГО ТЕСТЫ iter8 ПРОХОДЯТ
-			// ЛИБО Я БЕЗ ПОНЯТИЯ ПОЧЕМУ ОТВЕТЫ ДЛЯ ЗАПРОСОВ БЕЗ acceptEncoding ВСЕ РАВНО СЖИМАЮТСЯ(iter7)
-
-			// acceptEncoding := r.Header.Get(AcceptEncoding)
-			// if acceptEncoding == "" || !strings.Contains(acceptEncoding, "gzip") {
 			h.ServeHTTP(w, r)
-			//return
-			// }
-
-			// var cw *compressResponseWriter
-			// if strings.Contains(r.Header.Get(AcceptEncoding), Gzip) {
-			// 	cw = &compressResponseWriter{ResponseWriter: w}
-			// 	w = cw
-			// }
-
-			// h.ServeHTTP(w, r)
-
-			// if cw != nil && cw.Writer != nil {
-			// 	cw.Writer.Close()
-			// }
 		})
 	}
 }

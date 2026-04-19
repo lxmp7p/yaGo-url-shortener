@@ -9,7 +9,11 @@ func ShortenerRoutes(shortenerService *service.ShortenerService) chi.Router {
 	r := chi.NewRouter()
 	r.Post("/", shortenerService.GetShortURL)
 	r.Get("/{short_url}", shortenerService.GetOriginalURL)
+
 	r.Post("/api/shorten", shortenerService.GetShortURLApi)
+	r.Post("/api/shorten/batch", shortenerService.GetShortURLBatchAPI)
+
+	r.Get("/ping", shortenerService.PingDatabase)
 
 	return r
 }

@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"context"
 	"log"
 	"os"
 	"testing"
@@ -10,12 +11,12 @@ import (
 
 func TestNewCache(t *testing.T) {
 	tests := []struct {
-		name string // description of this test case
+		name     string // description of this test case
 		filepath string
 		want     *Cache
 	}{
 		{
-			name: "success new cache",
+			name:     "success new cache",
 			filepath: "tmp",
 			want: &Cache{
 				URLCache: make(map[string]string),
@@ -32,7 +33,7 @@ func TestNewCache(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := NewCache(tt.filepath)
+			got := NewCache(context.Background(), tt.filepath)
 			assert.Equal(t, got, tt.want)
 		})
 	}
@@ -40,18 +41,18 @@ func TestNewCache(t *testing.T) {
 
 func TestCache_Save(t *testing.T) {
 	tests := []struct {
-		name string // description of this test case
-		filepath string
+		name        string // description of this test case
+		filepath    string
 		originalURL string
 		shortURL    string
 		wantErr     bool
 	}{
 		{
-			name: "success save",
-			filepath: "tmp",
+			name:        "success save",
+			filepath:    "tmp",
 			originalURL: "ya.ru",
-			shortURL: "---",
-			wantErr: false,
+			shortURL:    "---",
+			wantErr:     false,
 		},
 	}
 	for _, tt := range tests {
@@ -62,9 +63,9 @@ func TestCache_Save(t *testing.T) {
 			}
 			defer os.Remove(tmpFile.Name())
 			defer tmpFile.Close()
-			
-			cache := NewCache(tt.filepath)
-			gotErr := cache.Save(tt.originalURL, tt.shortURL)
+
+			cache := NewCache(context.Background(), tt.filepath)
+			gotErr := cache.Save(context.Background(), tt.originalURL, tt.shortURL)
 			if gotErr != nil {
 				if !tt.wantErr {
 					t.Errorf("Save() failed: %v", gotErr)
@@ -80,18 +81,18 @@ func TestCache_Save(t *testing.T) {
 
 func TestCache_Get(t *testing.T) {
 	tests := []struct {
-		name string // description of this test case
+		name     string // description of this test case
 		filepath string
 		shortURL string
 		want     string
 		wantErr  bool
 	}{
 		{
-			name: "url not found",
+			name:     "url not found",
 			filepath: "tmp",
 			shortURL: "--------",
-			want: "--------",
-			wantErr: true,
+			want:     "--------",
+			wantErr:  true,
 		},
 	}
 	for _, tt := range tests {
@@ -103,8 +104,8 @@ func TestCache_Get(t *testing.T) {
 			defer os.Remove(tmpFile.Name())
 			defer tmpFile.Close()
 
-			cache := NewCache(tt.filepath)
-			got, gotErr := cache.Get(tt.shortURL)
+			cache := NewCache(context.Background(), tt.filepath)
+			got, gotErr := cache.Get(context.Background(), tt.shortURL)
 			if gotErr != nil {
 				if !tt.wantErr {
 					t.Errorf("Get() failed: %v", gotErr)
