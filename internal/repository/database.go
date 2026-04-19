@@ -57,15 +57,23 @@ func (cache *DatabaseCache) Save(ctx context.Context, originalURL, shortURL stri
 }
 
 func (cache *DatabaseCache) Get(ctx context.Context, shortURL string) (string, error) {
-	query := "SELECT original FROM urls WHERE short = $1"
+	query := "SELECT original, is_deleted FROM urls WHERE short = $1"
 
 	var original string
-	err := cache.db.QueryRow(query, shortURL).Scan(&original)
+	var isDeleted bool
+
+	err := cache.db.QueryRowContext(ctx, query, shortURL).
+		Scan(&original, &isDeleted)
+
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return "", ErrURLNotFound
 		}
 		return "", err
+	}
+
+	if isDeleted {
+		return "", ErrURLDeleted
 	}
 	return original, nil
 }

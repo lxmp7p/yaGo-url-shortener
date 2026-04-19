@@ -172,16 +172,20 @@ func (s *ShortenerService) CreateShortURLApi(w http.ResponseWriter, r *http.Requ
 	json.NewEncoder(w).Encode(ShortenResponse{Result: shortURL})
 }
 
-func (s *ShortenerService) GetOriginalURL(res http.ResponseWriter, req *http.Request) {
-	shortURL := chi.URLParam(req, "short_url")
-	originalURL, err := s.Storage.Get(req.Context(), shortURL)
+func (s *ShortenerService) GetOriginalURL(w http.ResponseWriter, r *http.Request) {
+	shortURL := chi.URLParam(r, "short_url")
+	originalURL, err := s.Storage.Get(r.Context(), shortURL)
 	if err != nil {
 		slog.Error(err.Error())
-		http.Error(res, http.StatusText(http.StatusNotFound), http.StatusNotFound)
+		if errors.Is(err, repository.ErrURLDeleted) {
+			http.NotFound(w, r)
+			return
+		}
+		http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
 		return
 	}
-	res.Header().Set("Location", originalURL)
-	res.WriteHeader(http.StatusTemporaryRedirect)
+	w.Header().Set("Location", originalURL)
+	w.WriteHeader(http.StatusTemporaryRedirect)
 }
 
 func (s *ShortenerService) CreateShortURL(w http.ResponseWriter, r *http.Request) {
