@@ -73,7 +73,11 @@ type Shorten struct {
 }
 
 func (s *ShortenerService) CreateShortURLBatchAPI(w http.ResponseWriter, r *http.Request) {
-	userID, _ := UserIDFromContext(r.Context())
+	userID, ok := UserIDFromContext(r.Context())
+	if !ok {
+		http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
+		return
+	}
 
 	var request []Original
 
@@ -120,7 +124,11 @@ func (s *ShortenerService) CreateShortURLBatchAPI(w http.ResponseWriter, r *http
 }
 
 func (s *ShortenerService) CreateShortURLApi(w http.ResponseWriter, r *http.Request) {
-	userID, _ := UserIDFromContext(r.Context())
+	userID, ok := UserIDFromContext(r.Context())
+	if !ok {
+		http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
+		return
+	}
 
 	var shortenRequest ShortenRequest
 	status := http.StatusCreated
