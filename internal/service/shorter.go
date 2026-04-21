@@ -189,7 +189,11 @@ func (s *ShortenerService) GetOriginalURL(w http.ResponseWriter, r *http.Request
 }
 
 func (s *ShortenerService) CreateShortURL(w http.ResponseWriter, r *http.Request) {
-	userID, _ := UserIDFromContext(r.Context())
+	userID, ok := UserIDFromContext(r.Context())
+	if !ok {
+		http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
+		return
+	}
 
 	contentType := r.Header.Get(ContentTypeHeader)
 	status := http.StatusCreated
@@ -271,7 +275,11 @@ func (s *ShortenerService) GetUsersURLs(w http.ResponseWriter, r *http.Request) 
 }
 
 func (s *ShortenerService) DeleteUsersURLs(w http.ResponseWriter, r *http.Request) {
-	userID, _ := UserIDFromContext(r.Context())
+	userID, ok := UserIDFromContext(r.Context())
+	if !ok {
+		http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
+		return
+	}
 
 	var ids []string
 	if err := json.NewDecoder(r.Body).Decode(&ids); err != nil {
