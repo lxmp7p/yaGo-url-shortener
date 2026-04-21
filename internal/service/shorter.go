@@ -73,11 +73,8 @@ type Shorten struct {
 }
 
 func (s *ShortenerService) CreateShortURLBatchAPI(w http.ResponseWriter, r *http.Request) {
-	userID, ok := r.Context().Value(UserIDFromContext).(string)
-	if !ok {
-		http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
-		return
-	}
+	userID, _ := UserIDFromContext(r.Context())
+
 	var request []Original
 
 	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
@@ -123,11 +120,8 @@ func (s *ShortenerService) CreateShortURLBatchAPI(w http.ResponseWriter, r *http
 }
 
 func (s *ShortenerService) CreateShortURLApi(w http.ResponseWriter, r *http.Request) {
-	userID, ok := r.Context().Value(UserIDFromContext).(string)
-	if !ok {
-		http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
-		return
-	}
+	userID, _ := UserIDFromContext(r.Context())
+
 	var shortenRequest ShortenRequest
 	status := http.StatusCreated
 
@@ -187,11 +181,7 @@ func (s *ShortenerService) GetOriginalURL(w http.ResponseWriter, r *http.Request
 }
 
 func (s *ShortenerService) CreateShortURL(w http.ResponseWriter, r *http.Request) {
-	userID, ok := r.Context().Value(UserIDFromContext).(string)
-	if !ok {
-		http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
-		return
-	}
+	userID, _ := UserIDFromContext(r.Context())
 
 	contentType := r.Header.Get(ContentTypeHeader)
 	status := http.StatusCreated
@@ -243,11 +233,7 @@ func (s *ShortenerService) CreateShortURL(w http.ResponseWriter, r *http.Request
 }
 
 func (s *ShortenerService) GetUsersURLs(w http.ResponseWriter, r *http.Request) {
-	userID, ok := r.Context().Value(UserIDFromContext).(string)
-	if !ok {
-		http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
-		return
-	}
+	userID, _ := UserIDFromContext(r.Context())
 
 	URLs, err := s.Storage.GetByUserID(r.Context(), userID)
 	if err != nil {
@@ -273,11 +259,7 @@ func (s *ShortenerService) GetUsersURLs(w http.ResponseWriter, r *http.Request) 
 }
 
 func (s *ShortenerService) DeleteUsersURLs(w http.ResponseWriter, r *http.Request) {
-	userID, ok := r.Context().Value(UserIDFromContext).(string)
-	if !ok {
-		http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
-		return
-	}
+	userID, _ := UserIDFromContext(r.Context())
 
 	var ids []string
 	if err := json.NewDecoder(r.Body).Decode(&ids); err != nil {
