@@ -73,7 +73,7 @@ type Shorten struct {
 }
 
 func (s *ShortenerService) CreateShortURLBatchAPI(w http.ResponseWriter, r *http.Request) {
-	userID, ok := r.Context().Value(UserIDKey).(string)
+	userID, ok := r.Context().Value(UserIDFromContext).(string)
 	if !ok {
 		http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
 		return
@@ -87,6 +87,7 @@ func (s *ShortenerService) CreateShortURLBatchAPI(w http.ResponseWriter, r *http
 
 	if len(request) == 0 {
 		http.Error(w, "Empty batch", http.StatusBadRequest)
+		return
 	}
 
 	var response []Shorten
@@ -122,7 +123,7 @@ func (s *ShortenerService) CreateShortURLBatchAPI(w http.ResponseWriter, r *http
 }
 
 func (s *ShortenerService) CreateShortURLApi(w http.ResponseWriter, r *http.Request) {
-	userID, ok := r.Context().Value(UserIDKey).(string)
+	userID, ok := r.Context().Value(UserIDFromContext).(string)
 	if !ok {
 		http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
 		return
@@ -186,7 +187,7 @@ func (s *ShortenerService) GetOriginalURL(w http.ResponseWriter, r *http.Request
 }
 
 func (s *ShortenerService) CreateShortURL(w http.ResponseWriter, r *http.Request) {
-	userID, ok := r.Context().Value(UserIDKey).(string)
+	userID, ok := r.Context().Value(UserIDFromContext).(string)
 	if !ok {
 		http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
 		return
@@ -242,7 +243,7 @@ func (s *ShortenerService) CreateShortURL(w http.ResponseWriter, r *http.Request
 }
 
 func (s *ShortenerService) GetUsersURLs(w http.ResponseWriter, r *http.Request) {
-	userID, ok := r.Context().Value(UserIDKey).(string)
+	userID, ok := r.Context().Value(UserIDFromContext).(string)
 	if !ok {
 		http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
 		return
@@ -272,7 +273,7 @@ func (s *ShortenerService) GetUsersURLs(w http.ResponseWriter, r *http.Request) 
 }
 
 func (s *ShortenerService) DeleteUsersURLs(w http.ResponseWriter, r *http.Request) {
-	userID, ok := r.Context().Value(UserIDKey).(string)
+	userID, ok := r.Context().Value(UserIDFromContext).(string)
 	if !ok {
 		http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
 		return

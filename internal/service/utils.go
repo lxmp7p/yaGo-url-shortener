@@ -1,13 +1,19 @@
 package service
 
 import (
+	"context"
 	"math/rand"
 	"net/http"
 )
 
 type contextKey string
 
-const UserIDKey contextKey = "userID"
+const userIDKey contextKey = "userID"
+
+func UserIDFromContext(ctx context.Context) (string, bool) {
+	id, ok := ctx.Value(userIDKey).(string)
+	return id, ok
+}
 
 func generateShortURL() string {
 	b := make([]byte, 8)
