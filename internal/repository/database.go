@@ -81,7 +81,7 @@ func (cache *DatabaseCache) Get(ctx context.Context, shortURL string) (string, e
 func (cache *DatabaseCache) GetByUserID(ctx context.Context, ownerID string) ([]URL, error) {
 	query := "SELECT id, original, short FROM urls WHERE owner_id = $1"
 
-	rows, err := cache.db.Query(query, ownerID)
+	rows, err := cache.db.QueryContext(ctx, query, ownerID)
 	if err != nil {
 		return nil, err
 	}

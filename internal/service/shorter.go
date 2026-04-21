@@ -26,7 +26,6 @@ const (
 	Chars             = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 )
 
-
 type DeleteTask struct {
 	UserID string
 	IDs    []string
@@ -45,7 +44,7 @@ type ShortenerService struct {
 	Logger   logrus.Logger
 	Database *sql.DB
 	secret   []byte
-	deleteCh chan DeleteTask
+	DeleteCh chan DeleteTask
 }
 
 type ShortenRequest struct {
@@ -285,7 +284,7 @@ func (s *ShortenerService) DeleteUsersURLs(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	s.deleteCh <- DeleteTask{
+	s.DeleteCh <- DeleteTask{
 		UserID: userID,
 		IDs:    ids,
 	}
@@ -301,12 +300,13 @@ func (s *ShortenerService) StartDeleteWorker() {
 
 		for {
 			select {
-			case task := <-s.deleteCh:
+			case task := <-s.DeleteCh:
 				batch[task.UserID] = append(batch[task.UserID], task.IDs...)
 			case <-ticker.C:
 				for userID, ids := range batch {
 					if len(ids) > 0 {
-						s.Storage.Delete(context.Background(), userID, ids)
+						err := s.Storage.Delete(context.Background(), userID, ids)
+						s.Logger.Error(err)
 					}
 				}
 				batch = make(map[string][]string)
