@@ -32,7 +32,7 @@ func InitRoutes(app App) chi.Router {
 		Config:   app.Config,
 		Storage:  app.Storage,
 		Database: app.Database,
-		DeleteCh: make(chan service.DeleteTask, 2),
+		DeleteCh: make(chan service.DeleteTask, 1),
 	}
 	shortenerService.StartDeleteWorker()
 
