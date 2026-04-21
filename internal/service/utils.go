@@ -15,6 +15,10 @@ func UserIDFromContext(ctx context.Context) (string, bool) {
 	return id, ok
 }
 
+func UserIDContextKey() contextKey {
+	return userIDKey
+}
+
 func generateShortURL() string {
 	b := make([]byte, 8)
 	for i := range b {
