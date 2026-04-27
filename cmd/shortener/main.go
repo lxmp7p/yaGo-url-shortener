@@ -5,7 +5,6 @@ import (
 	"database/sql"
 	"net/http"
 
-	"github.com/golang-migrate/migrate/v4"
 	"github.com/lxmp7p/yaGo-url-shortener/internal/config"
 	"github.com/lxmp7p/yaGo-url-shortener/internal/config/db"
 	"github.com/lxmp7p/yaGo-url-shortener/internal/repository"
@@ -22,13 +21,12 @@ func main() {
 	cfg.InitConfig()
 
 	logger := logrus.New()
-	if cfg.DatabaseDsn != "" {
-		logger.Info("Running migrations...")
-		runMigrations(cfg.DatabaseDsn, logger)
-		logger.Info("Migrations done")
-	}
 
-	database := db.InitDB(cfg)
+	database, err := db.InitDB(cfg, logger)
+
+	if err != nil {
+		logger.Fatal(err)
+	}
 
 	r := handler.InitRoutes(handler.App{
 		Config:   cfg,
@@ -36,8 +34,9 @@ func main() {
 		Logger:   logger,
 		Database: database,
 	})
+
 	logger.Infof("Starting server on %s", cfg.Addr)
-	err := http.ListenAndServe(cfg.Addr, r)
+	err = http.ListenAndServe(cfg.Addr, r)
 	logger.Fatalf("Server stopped: %v", err)
 
 }
@@ -50,20 +49,4 @@ func selectStorage(cfg config.Config, database *sql.DB) service.URLstorage {
 		return repository.NewCache(context.Background(), cfg.FileStoragePath)
 	}
 	return repository.NewCache(context.Background(), "")
-}
-
-func runMigrations(DSN string, logger *logrus.Logger) {
-	migrationsPath := "file://migrations"
-	dbURL := DSN
-	m, err := migrate.New(migrationsPath, dbURL)
-	if err != nil {
-		logger.Errorf("Failed to initialize migrate: %v", err)
-		return
-	}
-	if err := m.Up(); err != nil && err != migrate.ErrNoChange {
-		logger.Errorf("Migration failed: %v", err)
-		return
-	}
-
-	logger.Println("Migrations applied successfully!")
 }

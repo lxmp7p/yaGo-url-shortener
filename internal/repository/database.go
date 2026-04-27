@@ -11,12 +11,6 @@ type DatabaseCache struct {
 	db *sql.DB
 }
 
-type URL struct {
-	uuid     uuid.UUID
-	original string
-	short    string
-}
-
 func NewDatabaseCache(db *sql.DB) *DatabaseCache {
 	cache := &DatabaseCache{
 		db: db,
@@ -33,13 +27,13 @@ func (e *URLError) Error() string {
 	return ErrOriginalURLExists.Error()
 }
 
-func (cache *DatabaseCache) Save(ctx context.Context, originalURL, shortURL string) error {
+func (cache *DatabaseCache) Save(ctx context.Context, originalURL, shortURL string, userID string) error {
 	query := `
-	INSERT INTO urls (id, original, short) 
-	VALUES ($1, $2, $3) 
+	INSERT INTO urls (id, original, short, owner_id) 
+	VALUES ($1, $2, $3, $4) 
 	ON CONFLICT (original) DO NOTHING 
 	`
-	result, err := cache.db.Exec(query, uuid.New(), originalURL, shortURL)
+	result, err := cache.db.Exec(query, uuid.New(), originalURL, shortURL, userID)
 	if err != nil {
 		return err
 	}
@@ -63,20 +57,53 @@ func (cache *DatabaseCache) Save(ctx context.Context, originalURL, shortURL stri
 }
 
 func (cache *DatabaseCache) Get(ctx context.Context, shortURL string) (string, error) {
-	query := "SELECT original FROM urls WHERE short = $1"
+	query := "SELECT original, is_deleted FROM urls WHERE short = $1"
 
 	var original string
-	err := cache.db.QueryRow(query, shortURL).Scan(&original)
+	var isDeleted bool
+
+	err := cache.db.QueryRowContext(ctx, query, shortURL).
+		Scan(&original, &isDeleted)
+
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return "", ErrURLNotFound
 		}
 		return "", err
 	}
+
+	if isDeleted {
+		return "", ErrURLDeleted
+	}
 	return original, nil
 }
 
-func (cache *DatabaseCache) Load(ctx context.Context, shortURL string) ([]*URL, error) {
+func (cache *DatabaseCache) GetByUserID(ctx context.Context, ownerID string) ([]URL, error) {
+	query := "SELECT id, original, short FROM urls WHERE owner_id = $1"
+
+	rows, err := cache.db.QueryContext(ctx, query, ownerID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var result []URL
+	for rows.Next() {
+		var u URL
+		if err = rows.Scan(&u.UUID, &u.Original, &u.Short); err != nil {
+			return nil, err
+		}
+		result = append(result, u)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return result, nil
+}
+
+func (cache *DatabaseCache) Load(ctx context.Context, shortURL string, userID string) ([]*URL, error) {
 	query := "SELECT id, original, short FROM urls"
 
 	rows, err := cache.db.Query(query)
@@ -88,7 +115,7 @@ func (cache *DatabaseCache) Load(ctx context.Context, shortURL string) ([]*URL, 
 	var result []*URL
 	for rows.Next() {
 		var u URL
-		if err = rows.Scan(&u.uuid, &u.original, &u.short); err != nil {
+		if err = rows.Scan(&u.UUID, &u.Original, &u.Short); err != nil {
 			return nil, err
 		}
 		result = append(result, &u)
@@ -99,4 +126,15 @@ func (cache *DatabaseCache) Load(ctx context.Context, shortURL string) ([]*URL, 
 	}
 
 	return result, nil
+}
+
+func (cache *DatabaseCache) Delete(ctx context.Context, userID string, IDs []string) error {
+	query := "UPDATE urls SET is_deleted = TRUE WHERE owner_id = $1 AND short = ANY($2)"
+
+	_, err := cache.db.ExecContext(ctx, query, userID, IDs)
+	if err != nil {
+		return err
+	}
+
+	return err
 }

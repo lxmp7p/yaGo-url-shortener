@@ -9,6 +9,16 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+type Handler struct {
+	Service *service.ShortenerService
+}
+
+func NewHandler(s *service.ShortenerService) *Handler {
+	return &Handler{
+		Service: s,
+	}
+}
+
 type App struct {
 	Config   config.Config
 	Storage  service.URLstorage
@@ -22,10 +32,15 @@ func InitRoutes(app App) chi.Router {
 		Config:   app.Config,
 		Storage:  app.Storage,
 		Database: app.Database,
+		DeleteCh: make(chan service.DeleteTask, 1),
 	}
+	shortenerService.StartDeleteWorker()
+
+	handler := NewHandler(shortenerService)
 	apiRouter := chi.NewRouter()
 	apiRouter.Use(CompressMiddleware())
 	apiRouter.Use(LoggingMiddleware(app.Logger))
+	apiRouter.Use(handler.AuthMiddleware)
 
 	apiRouter.Mount("/", ShortenerRoutes(shortenerService))
 	return apiRouter

@@ -16,20 +16,22 @@ var (
 )
 
 type Cache struct {
-	URLCache map[string]string
+	URLCache map[string]URL
 	mu       sync.RWMutex
 	filename string
 }
 
-type Record struct {
-	UUID        string `json:"uuid"`
-	ShortURL    string `json:"short_url"`
-	OriginalURL string `json:"original_url"`
+type URL struct {
+	UUID        string `json:"id"`
+	Original    string `json:"original_url"`
+	Short       string `json:"short_url"`
+	UserID      string `json:"user_id"`
+	DeletedFlag bool   `json:"is_deleted"`
 }
 
 func NewCache(ctx context.Context, filepath string) *Cache {
 	cache := &Cache{
-		URLCache: make(map[string]string),
+		URLCache: make(map[string]URL),
 		filename: filepath,
 	}
 
@@ -38,19 +40,25 @@ func NewCache(ctx context.Context, filepath string) *Cache {
 	return cache
 }
 
-func (cache *Cache) Save(ctx context.Context, originalURL, shortURL string) error {
+func (cache *Cache) Save(ctx context.Context, originalURL, shortURL, userID string) error {
 	cache.mu.Lock()
 	defer cache.mu.Unlock()
 
 	if _, exists := cache.URLCache[shortURL]; exists {
 		return ErrExist
 	}
-	cache.URLCache[shortURL] = originalURL
 
-	record := Record{
-		UUID:        uuid.NewString(),
-		ShortURL:    shortURL,
-		OriginalURL: originalURL,
+	cache.URLCache[shortURL] = URL{
+		Original: originalURL,
+		Short:    shortURL,
+		UserID:   userID,
+	}
+
+	record := URL{
+		UUID:     uuid.NewString(),
+		Short:    shortURL,
+		Original: originalURL,
+		UserID:   userID,
 	}
 
 	data, err := json.Marshal(record)
@@ -76,12 +84,25 @@ func (cache *Cache) Get(ctx context.Context, shortURL string) (string, error) {
 	cache.mu.RLock()
 	defer cache.mu.RUnlock()
 
-	originalURL, ok := cache.URLCache[shortURL]
+	URL, ok := cache.URLCache[shortURL]
 	if !ok {
 		return "", ErrURLNotFound
 	}
 
-	return originalURL, nil
+	return URL.Original, nil
+}
+
+func (cache *Cache) GetByUserID(ctx context.Context, userID string) ([]URL, error) {
+	cache.mu.RLock()
+	defer cache.mu.RUnlock()
+	var urls []URL
+	for _, v := range cache.URLCache {
+		if v.UserID == userID {
+			urls = append(urls, v)
+		}
+	}
+
+	return urls, nil
 }
 
 func (cache *Cache) Load(ctx context.Context, shortURL string) (*Cache, error) {
@@ -97,11 +118,15 @@ func (cache *Cache) Load(ctx context.Context, shortURL string) (*Cache, error) {
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
 		line := scanner.Text()
-		record := Record{}
+		record := URL{}
 		if err := json.Unmarshal([]byte(line), &record); err != nil {
 			continue
 		}
-		cache.URLCache[record.ShortURL] = record.OriginalURL
+		cache.URLCache[record.Short] = URL{Original: record.Original}
 	}
 	return cache, nil
+}
+
+func (cache *Cache) Delete(ctx context.Context, shortURL string, IDs []string) error {
+	return nil
 }

@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+	"time"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/lxmp7p/yaGo-url-shortener/internal/config"
@@ -25,9 +26,16 @@ const (
 	Chars             = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 )
 
+type DeleteTask struct {
+	UserID string
+	IDs    []string
+}
+
 type URLstorage interface {
-	Save(ctx context.Context, originalURL string, shortURL string) error
+	Save(ctx context.Context, originalURL string, shortURL string, userID string) error
 	Get(ctx context.Context, shortURL string) (string, error)
+	GetByUserID(ctx context.Context, userID string) ([]repository.URL, error)
+	Delete(ctx context.Context, userID string, IDs []string) error
 }
 
 type ShortenerService struct {
@@ -35,6 +43,8 @@ type ShortenerService struct {
 	Storage  URLstorage
 	Logger   logrus.Logger
 	Database *sql.DB
+	secret   []byte
+	DeleteCh chan DeleteTask
 }
 
 type ShortenRequest struct {
@@ -62,16 +72,23 @@ type Shorten struct {
 	ShortURL string `json:"short_url"`
 }
 
-func (s *ShortenerService) GetShortURLBatchAPI(res http.ResponseWriter, req *http.Request) {
+func (s *ShortenerService) CreateShortURLBatchAPI(w http.ResponseWriter, r *http.Request) {
+	userID, ok := UserIDFromContext(r.Context())
+	if !ok {
+		http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
+		return
+	}
+
 	var request []Original
 
-	if err := json.NewDecoder(req.Body).Decode(&request); err != nil {
-		http.Error(res, "Invalid JSON", http.StatusBadRequest)
+	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
+		http.Error(w, "Invalid JSON", http.StatusBadRequest)
 		return
 	}
 
 	if len(request) == 0 {
-		http.Error(res, "Empty batch", http.StatusBadRequest)
+		http.Error(w, "Empty batch", http.StatusBadRequest)
+		return
 	}
 
 	var response []Shorten
@@ -82,7 +99,7 @@ func (s *ShortenerService) GetShortURLBatchAPI(res http.ResponseWriter, req *htt
 
 		for attempt := 0; attempt < MaxShortAttempts; attempt++ {
 			shortURL = generateShortURL()
-			err := s.Storage.Save(req.Context(), item.OriginalURL, shortURL)
+			err := s.Storage.Save(r.Context(), item.OriginalURL, shortURL, userID)
 			if err != nil {
 				continue
 			}
@@ -91,7 +108,7 @@ func (s *ShortenerService) GetShortURLBatchAPI(res http.ResponseWriter, req *htt
 
 		shortURL, err = url.JoinPath(s.Config.ResultAddr, shortURL)
 		if err != nil {
-			http.Error(res, "failed to generate URL", http.StatusBadRequest)
+			http.Error(w, "failed to generate URL", http.StatusBadRequest)
 			return
 		}
 
@@ -101,33 +118,39 @@ func (s *ShortenerService) GetShortURLBatchAPI(res http.ResponseWriter, req *htt
 		})
 	}
 
-	res.Header().Set("Content-Type", "application/json")
-	res.WriteHeader(http.StatusCreated)
-	json.NewEncoder(res).Encode(response)
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusCreated)
+	json.NewEncoder(w).Encode(response)
 }
 
-func (s *ShortenerService) GetShortURLApi(res http.ResponseWriter, req *http.Request) {
-	var shortenRequest ShortenRequest
-	status := http.StatusCreated
-
-	if err := json.NewDecoder(req.Body).Decode(&shortenRequest); err != nil {
-		http.Error(res, "Invalid JSON", http.StatusBadRequest)
+func (s *ShortenerService) CreateShortURLApi(w http.ResponseWriter, r *http.Request) {
+	userID, ok := UserIDFromContext(r.Context())
+	if !ok {
+		http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
 		return
 	}
 
-	if err := shortenRequest.Bind(req); err != nil {
-		http.Error(res, "Invalid JSON", http.StatusBadRequest)
+	var shortenRequest ShortenRequest
+	status := http.StatusCreated
+
+	if err := json.NewDecoder(r.Body).Decode(&shortenRequest); err != nil {
+		http.Error(w, "Invalid JSON", http.StatusBadRequest)
+		return
+	}
+
+	if err := shortenRequest.Bind(r); err != nil {
+		http.Error(w, "Invalid JSON", http.StatusBadRequest)
 		return
 	}
 
 	var shortURL string
 	for attempt := 0; attempt < MaxShortAttempts; attempt++ {
 		shortURL = generateShortURL()
-		err := s.Storage.Save(req.Context(), string(shortenRequest.URL), shortURL)
+		err := s.Storage.Save(r.Context(), string(shortenRequest.URL), shortURL, userID)
 		if err != nil {
 			var URLErr *repository.URLError
 			if errors.As(err, &URLErr) {
-				res.Header().Set("Content-Type", "application/json")
+				w.Header().Set("Content-Type", "application/json")
 				status = http.StatusConflict
 				shortURL = URLErr.Short
 				err = nil
@@ -140,51 +163,61 @@ func (s *ShortenerService) GetShortURLApi(res http.ResponseWriter, req *http.Req
 
 	shortURL, err := url.JoinPath(s.Config.ResultAddr, shortURL)
 	if err != nil {
-		http.Error(res, "failed to generate URL", http.StatusBadRequest)
+		http.Error(w, "failed to generate URL", http.StatusBadRequest)
 		return
 	}
 
-	res.Header().Set("Content-Type", "application/json")
-	res.WriteHeader(status)
-	json.NewEncoder(res).Encode(ShortenResponse{Result: shortURL})
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(status)
+	json.NewEncoder(w).Encode(ShortenResponse{Result: shortURL})
 }
 
-func (s *ShortenerService) GetOriginalURL(res http.ResponseWriter, req *http.Request) {
-	shortURL := chi.URLParam(req, "short_url")
-	originalURL, err := s.Storage.Get(req.Context(), shortURL)
+func (s *ShortenerService) GetOriginalURL(w http.ResponseWriter, r *http.Request) {
+	shortURL := chi.URLParam(r, "short_url")
+	originalURL, err := s.Storage.Get(r.Context(), shortURL)
 	if err != nil {
 		slog.Error(err.Error())
-		http.Error(res, http.StatusText(http.StatusNotFound), http.StatusNotFound)
+		if errors.Is(err, repository.ErrURLDeleted) {
+			w.WriteHeader(http.StatusGone)
+			return
+		}
+		http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
 		return
 	}
-	res.Header().Set("Location", originalURL)
-	res.WriteHeader(http.StatusTemporaryRedirect)
+	w.Header().Set("Location", originalURL)
+	w.WriteHeader(http.StatusTemporaryRedirect)
 }
 
-func (s *ShortenerService) GetShortURL(res http.ResponseWriter, req *http.Request) {
-	contentType := req.Header.Get(ContentTypeHeader)
+func (s *ShortenerService) CreateShortURL(w http.ResponseWriter, r *http.Request) {
+	userID, ok := UserIDFromContext(r.Context())
+	if !ok {
+		http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
+		return
+	}
+
+	contentType := r.Header.Get(ContentTypeHeader)
 	status := http.StatusCreated
 
 	if !strings.Contains(strings.ToLower(contentType), TextContentType) {
-		http.Error(res, http.StatusText(http.StatusUnsupportedMediaType), http.StatusUnsupportedMediaType)
+		http.Error(w, http.StatusText(http.StatusUnsupportedMediaType), http.StatusUnsupportedMediaType)
 		return
 	}
 
-	defer req.Body.Close()
-	body, err := io.ReadAll(req.Body)
+	defer r.Body.Close()
+	body, err := io.ReadAll(r.Body)
 	if err != nil {
-		http.Error(res, "failed to parse body", http.StatusBadRequest)
+		http.Error(w, "failed to parse body", http.StatusBadRequest)
 		return
 	}
 
 	var shortURL string
 	for attempt := 0; attempt < MaxShortAttempts; attempt++ {
 		shortURL = generateShortURL()
-		err = s.Storage.Save(req.Context(), string(body), shortURL)
+		err = s.Storage.Save(r.Context(), string(body), shortURL, userID)
 		if err != nil {
 			var URLErr *repository.URLError
 			if errors.As(err, &URLErr) {
-				res.Header().Set("Content-Type", "application/json")
+				w.Header().Set("Content-Type", "application/json")
 				status = http.StatusConflict
 				shortURL = URLErr.Short
 				err = nil
@@ -197,16 +230,90 @@ func (s *ShortenerService) GetShortURL(res http.ResponseWriter, req *http.Reques
 
 	if err != nil {
 		slog.Error(err.Error())
-		http.Error(res, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}
 
-	res.Header().Set(ContentTypeHeader, TextContentType)
-	res.WriteHeader(status)
+	w.Header().Set(ContentTypeHeader, TextContentType)
+	w.WriteHeader(status)
 	result, err := url.JoinPath(s.Config.ResultAddr, shortURL)
 	if err != nil {
-		http.Error(res, "failed to parse body", http.StatusBadRequest)
+		http.Error(w, "failed to parse body", http.StatusBadRequest)
 		return
 	}
-	res.Write([]byte(result))
+	w.Write([]byte(result))
+}
+
+func (s *ShortenerService) GetUsersURLs(w http.ResponseWriter, r *http.Request) {
+	userID, ok := UserIDFromContext(r.Context())
+	if !ok {
+		http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
+		return
+	}
+
+	URLs, err := s.Storage.GetByUserID(r.Context(), userID)
+	if err != nil {
+		slog.Error(err.Error())
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+
+	for i, u := range URLs {
+		shortURL, err := url.JoinPath(s.Config.ResultAddr, u.Short)
+		if err == nil {
+			URLs[i].Short = shortURL
+		}
+	}
+
+	if len(URLs) == 0 {
+		w.WriteHeader(http.StatusNoContent)
+		return
+	}
+
+	w.Header().Set(ContentTypeHeader, "application/json")
+	json.NewEncoder(w).Encode(URLs)
+}
+
+func (s *ShortenerService) DeleteUsersURLs(w http.ResponseWriter, r *http.Request) {
+	userID, ok := UserIDFromContext(r.Context())
+	if !ok {
+		http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
+		return
+	}
+
+	var ids []string
+	if err := json.NewDecoder(r.Body).Decode(&ids); err != nil {
+		http.Error(w, "Invalid JSON", http.StatusBadRequest)
+		return
+	}
+
+	s.DeleteCh <- DeleteTask{
+		UserID: userID,
+		IDs:    ids,
+	}
+	w.WriteHeader(http.StatusAccepted)
+}
+
+func (s *ShortenerService) StartDeleteWorker() {
+	go func() {
+		ticker := time.NewTicker(200 * time.Millisecond)
+		defer ticker.Stop()
+
+		batch := make(map[string][]string)
+
+		for {
+			select {
+			case task := <-s.DeleteCh:
+				batch[task.UserID] = append(batch[task.UserID], task.IDs...)
+			case <-ticker.C:
+				for userID, ids := range batch {
+					if len(ids) > 0 {
+						err := s.Storage.Delete(context.Background(), userID, ids)
+						s.Logger.Error(err)
+					}
+				}
+				batch = make(map[string][]string)
+			}
+		}
+	}()
 }
