@@ -10,6 +10,18 @@ type Config struct {
 	ResultAddr      string
 	FileStoragePath string
 	DatabaseDsn     string
+	FileLogging     LoggerInfo
+	RemoteLogging   LoggerInfo
+}
+
+type LoggerInfo struct {
+	Path   string
+	Enable bool
+}
+
+func (li *LoggerInfo) setPath(path string) {
+	li.Enable = true
+	li.Path = path
 }
 
 func NewConfig() Config {
@@ -25,6 +37,8 @@ func (cfg *Config) InitConfig() Config {
 		ResultAddr:      cfg.ResultAddr,
 		FileStoragePath: cfg.FileStoragePath,
 		DatabaseDsn:     cfg.DatabaseDsn,
+		RemoteLogging:   cfg.RemoteLogging,
+		FileLogging:     cfg.FileLogging,
 	}
 }
 
@@ -33,6 +47,8 @@ func (cfg *Config) argsConfigurator() {
 	resultAddr := flag.String("b", "http://localhost:8080", "server result ip:port")
 	fileStoragePath := flag.String("f", "storageFile", "file storage path")
 	databaseDsn := flag.String("d", "", "database connection string")
+	fileLoggingPath := flag.String("audit-file", "", "file logging path")
+	remoteLoggingUrl := flag.String("audit-url", "", "remote logging url")
 
 	flag.Parse()
 
@@ -40,6 +56,14 @@ func (cfg *Config) argsConfigurator() {
 	cfg.ResultAddr = *resultAddr
 	cfg.FileStoragePath = *fileStoragePath
 	cfg.DatabaseDsn = *databaseDsn
+
+	if *fileLoggingPath != "" {
+		cfg.FileLogging.setPath(*fileLoggingPath)
+	}
+
+	if *remoteLoggingUrl != "" {
+		cfg.RemoteLogging.setPath(*remoteLoggingUrl)
+	}
 }
 
 func (cfg *Config) envConfigurator() {
@@ -54,5 +78,11 @@ func (cfg *Config) envConfigurator() {
 	}
 	if envDatabaseDsn := os.Getenv("DATABASE_DSN"); envDatabaseDsn != "" {
 		cfg.DatabaseDsn = envDatabaseDsn
+	}
+	if envFileLoggingPath := os.Getenv("AUDIT_FILE"); envFileLoggingPath != "" {
+		cfg.FileLogging.setPath(envFileLoggingPath)
+	}
+	if envRemoteLoggingPath := os.Getenv("AUDIT_URL"); envRemoteLoggingPath != "" {
+		cfg.RemoteLogging.setPath(envRemoteLoggingPath)
 	}
 }
