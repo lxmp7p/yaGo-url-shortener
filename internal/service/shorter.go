@@ -15,6 +15,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/lxmp7p/yaGo-url-shortener/internal/config"
+	"github.com/lxmp7p/yaGo-url-shortener/internal/logger"
 	"github.com/lxmp7p/yaGo-url-shortener/internal/repository"
 	"github.com/sirupsen/logrus"
 )
@@ -39,12 +40,13 @@ type URLstorage interface {
 }
 
 type ShortenerService struct {
-	Config   config.Config
-	Storage  URLstorage
-	Logger   logrus.Logger
-	Database *sql.DB
-	secret   []byte
-	DeleteCh chan DeleteTask
+	Config     config.Config
+	Storage    URLstorage
+	Logger     logrus.Logger
+	Database   *sql.DB
+	secret     []byte
+	DeleteCh   chan DeleteTask
+	Dispatcher *logger.Dispatcher
 }
 
 type ShortenRequest struct {
@@ -167,12 +169,25 @@ func (s *ShortenerService) CreateShortURLApi(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
+	s.Dispatcher.Notify(logger.AuditEvent{
+		Ts:     time.Now().Unix(),
+		Action: "shorten",
+		UserID: userID,
+		URL:    string(shortenRequest.URL),
+	})
+
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
 	json.NewEncoder(w).Encode(ShortenResponse{Result: shortURL})
 }
 
 func (s *ShortenerService) GetOriginalURL(w http.ResponseWriter, r *http.Request) {
+	userID, ok := UserIDFromContext(r.Context())
+	if !ok {
+		http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
+		return
+	}
+
 	shortURL := chi.URLParam(r, "short_url")
 	originalURL, err := s.Storage.Get(r.Context(), shortURL)
 	if err != nil {
@@ -184,6 +199,14 @@ func (s *ShortenerService) GetOriginalURL(w http.ResponseWriter, r *http.Request
 		http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
 		return
 	}
+
+	s.Dispatcher.Notify(logger.AuditEvent{
+		Ts:     time.Now().Unix(),
+		Action: "shorten",
+		UserID: userID,
+		URL:    originalURL,
+	})
+
 	w.Header().Set("Location", originalURL)
 	w.WriteHeader(http.StatusTemporaryRedirect)
 }
@@ -210,10 +233,12 @@ func (s *ShortenerService) CreateShortURL(w http.ResponseWriter, r *http.Request
 		return
 	}
 
+	originalUrl := string(body)
+
 	var shortURL string
 	for attempt := 0; attempt < MaxShortAttempts; attempt++ {
 		shortURL = generateShortURL()
-		err = s.Storage.Save(r.Context(), string(body), shortURL, userID)
+		err = s.Storage.Save(r.Context(), originalUrl, shortURL, userID)
 		if err != nil {
 			var URLErr *repository.URLError
 			if errors.As(err, &URLErr) {
@@ -241,6 +266,14 @@ func (s *ShortenerService) CreateShortURL(w http.ResponseWriter, r *http.Request
 		http.Error(w, "failed to parse body", http.StatusBadRequest)
 		return
 	}
+
+	s.Dispatcher.Notify(logger.AuditEvent{
+		Ts:     time.Now().Unix(),
+		Action: "shorten",
+		UserID: userID,
+		URL:    originalUrl,
+	})
+
 	w.Write([]byte(result))
 }
 

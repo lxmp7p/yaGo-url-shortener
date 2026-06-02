@@ -25,13 +25,13 @@ type Dispatcher struct {
 }
 
 type FileObserver struct {
-	path string
+	Path string
 	mu   sync.Mutex
 }
 
 type HTTPObserver struct {
-	url    string
-	client *http.Client
+	URL    string
+	Client *http.Client
 }
 
 func (d *Dispatcher) Register(o Observer) {
@@ -54,6 +54,10 @@ func (d *Dispatcher) Unregister(target Observer) {
 }
 
 func (d *Dispatcher) Notify(event AuditEvent) {
+	if d == nil {
+		return
+	}
+
 	d.mu.RLock()
 	observers := append([]Observer(nil), d.observers...)
 	d.mu.RUnlock()
@@ -69,7 +73,7 @@ func (f *FileObserver) Notify(event AuditEvent) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 
-	file, err := os.OpenFile(f.path, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	file, err := os.OpenFile(f.Path, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
 		return
 	}
@@ -81,10 +85,10 @@ func (f *FileObserver) Notify(event AuditEvent) {
 func (h *HTTPObserver) Notify(event AuditEvent) {
 	data, _ := json.Marshal(event)
 
-	req, _ := http.NewRequest("POST", h.url, bytes.NewBuffer(data))
+	req, _ := http.NewRequest("POST", h.URL, bytes.NewBuffer(data))
 	req.Header.Set("Content-Type", "application/json")
 
-	resp, err := h.client.Do(req)
+	resp, err := h.Client.Do(req)
 	if err != nil {
 		return
 	}
