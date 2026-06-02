@@ -56,14 +56,13 @@ func (cache *Cache) Save(ctx context.Context, originalURL, shortURL, userID stri
 		UserID:   userID,
 	}
 
-	record := URL{
+	data, err := json.Marshal(URL{
 		UUID:     uuid.New(),
 		Short:    shortURL,
 		Original: originalURL,
 		UserID:   userID,
-	}
+	})
 
-	data, err := json.Marshal(record)
 	if err != nil {
 		return err
 	}
