@@ -19,20 +19,22 @@ type Cache struct {
 	URLCache map[string]URL
 	mu       sync.RWMutex
 	filename string
+	file     *os.File
 }
 
 type URL struct {
-	UUID        string `json:"id"`
-	Original    string `json:"original_url"`
-	Short       string `json:"short_url"`
-	UserID      string `json:"user_id"`
-	DeletedFlag bool   `json:"is_deleted"`
+	UUID        uuid.UUID `json:"id"`
+	Original    string    `json:"original_url"`
+	Short       string    `json:"short_url"`
+	UserID      string    `json:"user_id"`
+	DeletedFlag bool      `json:"is_deleted"`
 }
 
-func NewCache(ctx context.Context, filepath string) *Cache {
+func NewCache(ctx context.Context, filepath string, file *os.File) *Cache {
 	cache := &Cache{
 		URLCache: make(map[string]URL),
 		filename: filepath,
+		file:     file,
 	}
 
 	cache.Load(ctx, filepath)
@@ -55,7 +57,7 @@ func (cache *Cache) Save(ctx context.Context, originalURL, shortURL, userID stri
 	}
 
 	record := URL{
-		UUID:     uuid.NewString(),
+		UUID:     uuid.New(),
 		Short:    shortURL,
 		Original: originalURL,
 		UserID:   userID,
@@ -66,13 +68,7 @@ func (cache *Cache) Save(ctx context.Context, originalURL, shortURL, userID stri
 		return err
 	}
 
-	file, err := os.OpenFile(cache.filename, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
-	if err != nil {
-		return err
-	}
-	defer file.Close()
-
-	_, err = file.Write(append(data, '\n'))
+	_, err = cache.file.Write(append(data, '\n'))
 	if err != nil {
 		return err
 	}

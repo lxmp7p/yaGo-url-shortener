@@ -36,7 +36,7 @@ func TestGetShortURLHandler(t *testing.T) {
 			Addr:       "localhost:8080",
 			ResultAddr: "http://localhost:8080",
 		},
-		Storage: repository.NewCache(context.Background(), tmpFile.Name()),
+		Storage: repository.NewCache(context.Background(), tmpFile.Name(), tmpFile),
 		Logger:  logrus.New(),
 	}
 
