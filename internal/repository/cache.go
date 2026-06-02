@@ -113,12 +113,12 @@ func (cache *Cache) Load(ctx context.Context, shortURL string) (*Cache, error) {
 
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
-		line := scanner.Text()
+		line := scanner.Bytes()
 		record := URL{}
-		if err := json.Unmarshal([]byte(line), &record); err != nil {
+		if err := json.Unmarshal(line, &record); err != nil {
 			continue
 		}
-		cache.URLCache[record.Short] = URL{Original: record.Original}
+		cache.URLCache[record.Short] = record
 	}
 	return cache, nil
 }
