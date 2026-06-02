@@ -233,12 +233,12 @@ func (s *ShortenerService) CreateShortURL(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	originalUrl := string(body)
+	originalURL := string(body)
 
 	var shortURL string
 	for attempt := 0; attempt < MaxShortAttempts; attempt++ {
 		shortURL = generateShortURL()
-		err = s.Storage.Save(r.Context(), originalUrl, shortURL, userID)
+		err = s.Storage.Save(r.Context(), originalURL, shortURL, userID)
 		if err != nil {
 			var URLErr *repository.URLError
 			if errors.As(err, &URLErr) {
@@ -271,7 +271,7 @@ func (s *ShortenerService) CreateShortURL(w http.ResponseWriter, r *http.Request
 		Ts:     time.Now().Unix(),
 		Action: "shorten",
 		UserID: userID,
-		URL:    originalUrl,
+		URL:    originalURL,
 	})
 
 	w.Write([]byte(result))
