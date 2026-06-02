@@ -170,7 +170,7 @@ func (s *ShortenerService) CreateShortURLApi(w http.ResponseWriter, r *http.Requ
 	}
 
 	s.Dispatcher.Notify(logger.AuditEvent{
-		Ts:     time.Now().Unix(),
+		TS:     time.Now().Unix(),
 		Action: "shorten",
 		UserID: userID,
 		URL:    string(shortenRequest.URL),
@@ -201,7 +201,7 @@ func (s *ShortenerService) GetOriginalURL(w http.ResponseWriter, r *http.Request
 	}
 
 	s.Dispatcher.Notify(logger.AuditEvent{
-		Ts:     time.Now().Unix(),
+		TS:     time.Now().Unix(),
 		Action: "shorten",
 		UserID: userID,
 		URL:    originalURL,
@@ -268,7 +268,7 @@ func (s *ShortenerService) CreateShortURL(w http.ResponseWriter, r *http.Request
 	}
 
 	s.Dispatcher.Notify(logger.AuditEvent{
-		Ts:     time.Now().Unix(),
+		TS:     time.Now().Unix(),
 		Action: "shorten",
 		UserID: userID,
 		URL:    originalURL,

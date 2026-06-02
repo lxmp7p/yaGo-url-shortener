@@ -48,7 +48,7 @@ func (cfg *Config) argsConfigurator() {
 	fileStoragePath := flag.String("f", "storageFile", "file storage path")
 	databaseDsn := flag.String("d", "", "database connection string")
 	fileLoggingPath := flag.String("audit-file", "", "file logging path")
-	remoteLoggingUrl := flag.String("audit-url", "", "remote logging url")
+	remoteLoggingURL := flag.String("audit-url", "", "remote logging url")
 
 	flag.Parse()
 
@@ -61,8 +61,8 @@ func (cfg *Config) argsConfigurator() {
 		cfg.FileLogging.setPath(*fileLoggingPath)
 	}
 
-	if *remoteLoggingUrl != "" {
-		cfg.RemoteLogging.setPath(*remoteLoggingUrl)
+	if *remoteLoggingURL != "" {
+		cfg.RemoteLogging.setPath(*remoteLoggingURL)
 	}
 }
 
