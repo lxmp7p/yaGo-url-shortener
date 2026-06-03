@@ -402,3 +402,35 @@ func ExampleShortenerRoutes_deleteUsersURLs() {
 	// Output:
 	// 202
 }
+
+func TestApp_registerDispatcher(t *testing.T) {
+	app := &App{
+		Config: config.Config{
+			FileLogging: config.LoggerInfo{
+				Enable: true,
+				Path:   "/tmp/test.log",
+			},
+			RemoteLogging: config.LoggerInfo{
+				Enable: true,
+				Path:   "http://localhost:8080/log",
+			},
+		},
+	}
+
+	d := app.registerDispatcher()
+
+	if d == nil {
+		t.Fatal("dispatcher is nil")
+	}
+}
+
+func TestApp_validateApp_nilLogger(t *testing.T) {
+	app := &App{}
+
+	app.validateApp()
+
+	if app.Logger == nil {
+		t.Fatal("logger should be initialized")
+	}
+}
+
