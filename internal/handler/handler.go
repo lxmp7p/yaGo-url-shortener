@@ -12,6 +12,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+// Структура хэндлера хранящая в себе все необходимые сервисы
 type Handler struct {
 	Service *service.ShortenerService
 }
@@ -22,6 +23,7 @@ func NewHandler(s *service.ShortenerService) *Handler {
 	}
 }
 
+// Структура приложения хранящая все необходимые ресурсы, для запуска сервиса
 type App struct {
 	Config   config.Config
 	Storage  service.URLstorage
@@ -29,6 +31,8 @@ type App struct {
 	Database *sql.DB
 }
 
+// Создает сервис shortenerService, запускает воркер для удаления,
+// создает хэндлер и подключает мидлвари к роуту
 func InitRoutes(app App) chi.Router {
 	app.validateApp()
 	shortenerService := &service.ShortenerService{
@@ -51,12 +55,14 @@ func InitRoutes(app App) chi.Router {
 	return apiRouter
 }
 
+// Проверяет наличие логгера в приложении
 func (app *App) validateApp() {
 	if app.Logger == nil {
 		app.Logger = logrus.New()
 	}
 }
 
+// Регистрирует Dispatcher для паттерна наблюдатель
 func (app *App) registerDispatcher() *logger.Dispatcher {
 	dispatcher := &logger.Dispatcher{}
 

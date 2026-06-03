@@ -32,6 +32,7 @@ type DeleteTask struct {
 	IDs    []string
 }
 
+// Интерфейс для реализации функционала сокращения ссылок
 type URLstorage interface {
 	Save(ctx context.Context, originalURL string, shortURL string, userID string) error
 	Get(ctx context.Context, shortURL string) (string, error)
@@ -39,6 +40,7 @@ type URLstorage interface {
 	Delete(ctx context.Context, userID string, IDs []string) error
 }
 
+// Стуктура сервиса для сокращения ссылок
 type ShortenerService struct {
 	Config     config.Config
 	Storage    URLstorage
@@ -74,6 +76,7 @@ type Shorten struct {
 	ShortURL string `json:"short_url"`
 }
 
+// Получает на вход список из ссылок и для каждой формирует ShortUrl
 func (s *ShortenerService) CreateShortURLBatchAPI(w http.ResponseWriter, r *http.Request) {
 	userID, ok := UserIDFromContext(r.Context())
 	if !ok {
@@ -125,6 +128,7 @@ func (s *ShortenerService) CreateShortURLBatchAPI(w http.ResponseWriter, r *http
 	json.NewEncoder(w).Encode(response)
 }
 
+// Получает на вход URL в r.Body и формирует короткую ссылку
 func (s *ShortenerService) CreateShortURLApi(w http.ResponseWriter, r *http.Request) {
 	userID, ok := UserIDFromContext(r.Context())
 	if !ok {
@@ -181,6 +185,7 @@ func (s *ShortenerService) CreateShortURLApi(w http.ResponseWriter, r *http.Requ
 	json.NewEncoder(w).Encode(ShortenResponse{Result: shortURL})
 }
 
+// Получает на вход короткую ссылку и возвращает изначальное значение
 func (s *ShortenerService) GetOriginalURL(w http.ResponseWriter, r *http.Request) {
 	userID, ok := UserIDFromContext(r.Context())
 	if !ok {
@@ -211,6 +216,7 @@ func (s *ShortenerService) GetOriginalURL(w http.ResponseWriter, r *http.Request
 	w.WriteHeader(http.StatusTemporaryRedirect)
 }
 
+// Получает на вход ссылку и возвращает shortUrl
 func (s *ShortenerService) CreateShortURL(w http.ResponseWriter, r *http.Request) {
 	userID, ok := UserIDFromContext(r.Context())
 	if !ok {
@@ -277,6 +283,7 @@ func (s *ShortenerService) CreateShortURL(w http.ResponseWriter, r *http.Request
 	w.Write([]byte(result))
 }
 
+// Получает userId из контекста и возвращает все сохраненные ссылки пользователя
 func (s *ShortenerService) GetUsersURLs(w http.ResponseWriter, r *http.Request) {
 	userID, ok := UserIDFromContext(r.Context())
 	if !ok {
@@ -307,6 +314,7 @@ func (s *ShortenerService) GetUsersURLs(w http.ResponseWriter, r *http.Request) 
 	json.NewEncoder(w).Encode(URLs)
 }
 
+// Получает на вход список ссылок и удаляет их из кэша
 func (s *ShortenerService) DeleteUsersURLs(w http.ResponseWriter, r *http.Request) {
 	userID, ok := UserIDFromContext(r.Context())
 	if !ok {
@@ -327,6 +335,7 @@ func (s *ShortenerService) DeleteUsersURLs(w http.ResponseWriter, r *http.Reques
 	w.WriteHeader(http.StatusAccepted)
 }
 
+// Запускает воркер в фоне который удаляет содержимое из кэша батчами
 func (s *ShortenerService) StartDeleteWorker() {
 	go func() {
 		ticker := time.NewTicker(200 * time.Millisecond)

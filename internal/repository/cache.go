@@ -15,6 +15,7 @@ var (
 	ErrExist = errors.New("shortURL already exists")
 )
 
+// Структура реализации кэша
 type Cache struct {
 	URLCache map[string]URL
 	mu       sync.RWMutex
@@ -22,6 +23,7 @@ type Cache struct {
 	file     *os.File
 }
 
+// Структура для хранения информации о записи
 type URL struct {
 	UUID        uuid.UUID `json:"id"`
 	Original    string    `json:"original_url"`
@@ -30,6 +32,7 @@ type URL struct {
 	DeletedFlag bool      `json:"is_deleted"`
 }
 
+// Создает новую структуру Cache
 func NewCache(ctx context.Context, filepath string, file *os.File) *Cache {
 	cache := &Cache{
 		URLCache: make(map[string]URL),
@@ -42,6 +45,8 @@ func NewCache(ctx context.Context, filepath string, file *os.File) *Cache {
 	return cache
 }
 
+// Проверяет наличие shortURL в кэше и в случае отсутствия, добавляет
+// новое значение URL{} в кэш
 func (cache *Cache) Save(ctx context.Context, originalURL, shortURL, userID string) error {
 	cache.mu.Lock()
 	defer cache.mu.Unlock()
@@ -75,6 +80,8 @@ func (cache *Cache) Save(ctx context.Context, originalURL, shortURL, userID stri
 	return nil
 }
 
+// Возвращает значение из кэша. В случае, если такого значения нет
+// возвращает ошибку ErrURLNotFound
 func (cache *Cache) Get(ctx context.Context, shortURL string) (string, error) {
 	cache.mu.RLock()
 	defer cache.mu.RUnlock()
@@ -87,6 +94,7 @@ func (cache *Cache) Get(ctx context.Context, shortURL string) (string, error) {
 	return URL.Original, nil
 }
 
+// Возвращает все значения сохраненные пользователем по его userID
 func (cache *Cache) GetByUserID(ctx context.Context, userID string) ([]URL, error) {
 	cache.mu.RLock()
 	defer cache.mu.RUnlock()
@@ -100,6 +108,8 @@ func (cache *Cache) GetByUserID(ctx context.Context, userID string) ([]URL, erro
 	return urls, nil
 }
 
+// Открывает файл на чтение, получает из него все сохраненные записи
+// и записывает их в Cache
 func (cache *Cache) Load(ctx context.Context, shortURL string) (*Cache, error) {
 	cache.mu.Lock()
 	defer cache.mu.Unlock()

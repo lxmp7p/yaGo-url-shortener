@@ -13,8 +13,10 @@ import (
 	"path"
 	"testing"
 
+	"github.com/google/uuid"
 	"github.com/lxmp7p/yaGo-url-shortener/internal/config"
 	"github.com/lxmp7p/yaGo-url-shortener/internal/repository"
+	"github.com/lxmp7p/yaGo-url-shortener/internal/service"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -125,4 +127,278 @@ func TestGetShortURLHandler(t *testing.T) {
 			assert.Equal(t, test.want.contentType, res.Header.Get("Content-Type"))
 		})
 	}
+}
+
+func ExampleShortenerRoutes_сreateShortURL() {
+	tmpFile, err := os.CreateTemp("", "tmp")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer os.Remove(tmpFile.Name())
+	defer tmpFile.Close()
+
+	storage := repository.NewCache(context.Background(), "", tmpFile)
+	shortenerService := &service.ShortenerService{
+		Storage:  storage,
+		DeleteCh: make(chan service.DeleteTask, 1),
+	}
+	router := ShortenerRoutes(shortenerService)
+
+	req := httptest.NewRequest(
+		http.MethodPost,
+		"/",
+		bytes.NewBufferString(`{"url":"https://practicum.yandex.ru"}`),
+	)
+	req.Header.Set("Content-Type", "text/plain")
+
+	ctx := context.WithValue(
+		req.Context(),
+		service.UserIDContextKey(),
+		"test-user",
+	)
+
+	req = req.WithContext(ctx)
+
+	w := httptest.NewRecorder()
+
+	router.ServeHTTP(w, req)
+
+	fmt.Println(w.Code)
+
+	// Output:
+	// 201
+}
+
+func ExampleShortenerRoutes_getOriginalURL() {
+	tmpFile, err := os.CreateTemp("", "tmp")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer os.Remove(tmpFile.Name())
+	defer tmpFile.Close()
+
+	storage := repository.NewCache(context.Background(), "", tmpFile)
+	storage.URLCache = map[string]repository.URL{
+		"abc123": {
+			UUID:        uuid.MustParse("550e8400-e29b-41d4-a716-446655440000"),
+			Original:    "https://practicum.yandex.ru",
+			Short:       "abc123",
+			UserID:      "test-user",
+			DeletedFlag: false,
+		},
+	}
+
+	shortenerService := &service.ShortenerService{
+		Storage:  storage,
+		DeleteCh: make(chan service.DeleteTask, 1),
+	}
+	router := ShortenerRoutes(shortenerService)
+
+	req := httptest.NewRequest(
+		http.MethodGet,
+		"/abc123",
+		bytes.NewBufferString(""),
+	)
+	req.Header.Set("Content-Type", "application/json")
+
+	ctx := context.WithValue(
+		req.Context(),
+		service.UserIDContextKey(),
+		"test-user",
+	)
+
+	req = req.WithContext(ctx)
+
+	w := httptest.NewRecorder()
+
+	router.ServeHTTP(w, req)
+
+	fmt.Println(w.Code)
+
+	// Output:
+	// 307
+}
+
+func ExampleShortenerRoutes_сreateShortURLApi() {
+	tmpFile, err := os.CreateTemp("", "tmp")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer os.Remove(tmpFile.Name())
+	defer tmpFile.Close()
+
+	storage := repository.NewCache(context.Background(), "", tmpFile)
+	shortenerService := &service.ShortenerService{
+		Storage:  storage,
+		DeleteCh: make(chan service.DeleteTask, 1),
+	}
+	router := ShortenerRoutes(shortenerService)
+
+	req := httptest.NewRequest(
+		http.MethodPost,
+		"/api/shorten",
+		bytes.NewBufferString(`{"url":"https://practicum.yandex.ru"}`),
+	)
+	req.Header.Set("Content-Type", "application/json")
+
+	ctx := context.WithValue(
+		req.Context(),
+		service.UserIDContextKey(),
+		"test-user",
+	)
+
+	req = req.WithContext(ctx)
+
+	w := httptest.NewRecorder()
+
+	router.ServeHTTP(w, req)
+
+	fmt.Println(w.Code)
+
+	// Output:
+	// 201
+}
+
+func ExampleShortenerRoutes_createShortURLBatchApi() {
+	tmpFile, err := os.CreateTemp("", "tmp")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer os.Remove(tmpFile.Name())
+	defer tmpFile.Close()
+
+	storage := repository.NewCache(context.Background(), "", tmpFile)
+	shortenerService := &service.ShortenerService{
+		Storage:  storage,
+		DeleteCh: make(chan service.DeleteTask, 1),
+	}
+	router := ShortenerRoutes(shortenerService)
+
+	req := httptest.NewRequest(
+		http.MethodPost,
+		"/api/shorten/batch",
+		bytes.NewBufferString(`[
+        {
+            "correlation_id":"1",
+            "original_url":"https://practicum.yandex.ru"
+        }
+    ]`),
+	)
+
+	req.Header.Set("Content-Type", "application/json")
+
+	ctx := context.WithValue(
+		req.Context(),
+		service.UserIDContextKey(),
+		"test-user",
+	)
+
+	req = req.WithContext(ctx)
+
+	w := httptest.NewRecorder()
+
+	router.ServeHTTP(w, req)
+
+	fmt.Println(w.Code)
+
+	// Output:
+	// 201
+}
+
+func ExampleShortenerRoutes_getUsersURLs() {
+	tmpFile, err := os.CreateTemp("", "tmp")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer os.Remove(tmpFile.Name())
+	defer tmpFile.Close()
+
+	storage := repository.NewCache(context.Background(), "", tmpFile)
+	storage.URLCache = map[string]repository.URL{
+		"abc123": {
+			UUID:        uuid.MustParse("550e8400-e29b-41d4-a716-446655440000"),
+			Original:    "https://practicum.yandex.ru",
+			Short:       "abc123",
+			UserID:      "test-user",
+			DeletedFlag: false,
+		},
+	}
+	shortenerService := &service.ShortenerService{
+		Storage:  storage,
+		DeleteCh: make(chan service.DeleteTask, 1),
+	}
+	router := ShortenerRoutes(shortenerService)
+
+	req := httptest.NewRequest(
+		http.MethodGet,
+		"/api/user/urls",
+		bytes.NewBufferString(`{"url":"https://practicum.yandex.ru"}`),
+	)
+	req.Header.Set("Content-Type", "application/json")
+
+	ctx := context.WithValue(
+		req.Context(),
+		service.UserIDContextKey(),
+		"test-user",
+	)
+
+	req = req.WithContext(ctx)
+
+	w := httptest.NewRecorder()
+
+	router.ServeHTTP(w, req)
+
+	fmt.Println(w.Code)
+
+	// Output:
+	// 200
+}
+
+func ExampleShortenerRoutes_deleteUsersURLs() {
+	tmpFile, err := os.CreateTemp("", "tmp")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer os.Remove(tmpFile.Name())
+	defer tmpFile.Close()
+
+	storage := repository.NewCache(context.Background(), "", tmpFile)
+	storage.URLCache = map[string]repository.URL{
+		"abc123": {
+			UUID:        uuid.MustParse("550e8400-e29b-41d4-a716-446655440000"),
+			Original:    "https://practicum.yandex.ru",
+			Short:       "abc123",
+			UserID:      "test-user",
+			DeletedFlag: false,
+		},
+	}
+	shortenerService := &service.ShortenerService{
+		Storage:  storage,
+		DeleteCh: make(chan service.DeleteTask, 1),
+	}
+	router := ShortenerRoutes(shortenerService)
+
+	req := httptest.NewRequest(
+		http.MethodDelete,
+		"/api/user/urls",
+		bytes.NewBufferString(`["abc123"]`),
+	)
+	req.Header.Set("Content-Type", "application/json")
+
+	ctx := context.WithValue(
+		req.Context(),
+		service.UserIDContextKey(),
+		"test-user",
+	)
+
+	req = req.WithContext(ctx)
+
+	w := httptest.NewRecorder()
+
+	router.ServeHTTP(w, req)
+
+	fmt.Println(w.Code)
+
+	// Output:
+	// 202
 }
