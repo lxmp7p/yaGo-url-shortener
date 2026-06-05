@@ -433,4 +433,3 @@ func TestApp_validateApp_nilLogger(t *testing.T) {
 		t.Fatal("logger should be initialized")
 	}
 }
-
