@@ -5,6 +5,8 @@ import (
 	"net/http/httptest"
 	"os"
 	"testing"
+
+	"github.com/hashicorp/go-retryablehttp"
 )
 
 type mockObserver struct {
@@ -87,7 +89,7 @@ func TestHTTPObserver_Notify(t *testing.T) {
 
 	h := &HTTPObserver{
 		url:    server.URL,
-		client: server.Client(),
+		client: retryablehttp.NewClient(),
 	}
 
 	event := AuditEvent{

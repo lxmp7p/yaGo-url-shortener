@@ -1,10 +1,8 @@
 package logger
 
 import (
-	"bytes"
 	"encoding/json"
 	"io"
-	"net/http"
 	"os"
 	"sync"
 
@@ -36,7 +34,7 @@ type FileObserver struct {
 
 type HTTPObserver struct {
 	url    string
-	client *http.Client
+	client *retryablehttp.Client
 }
 
 func NewHTTPObserver(url string) *HTTPObserver {
@@ -45,7 +43,7 @@ func NewHTTPObserver(url string) *HTTPObserver {
 
 	return &HTTPObserver{
 		url:    url,
-		client: retryClient.StandardClient(),
+		client: retryClient,
 	}
 }
 
@@ -102,7 +100,7 @@ func (d *Dispatcher) Notify(event AuditEvent) {
 
 	for _, o := range observers {
 		d.sem <- struct{}{}
-		
+
 		go func(obs Observer) {
 			defer func() {
 				<-d.sem
@@ -123,7 +121,11 @@ func (f *FileObserver) Notify(event AuditEvent) {
 func (h *HTTPObserver) Notify(event AuditEvent) {
 	data, _ := json.Marshal(event)
 
-	req, _ := http.NewRequest("POST", h.url, bytes.NewBuffer(data))
+	req, _ := retryablehttp.NewRequest(
+		"POST",
+		h.url,
+		data,
+	)
 	req.Header.Set("Content-Type", "application/json")
 
 	resp, err := h.client.Do(req)
