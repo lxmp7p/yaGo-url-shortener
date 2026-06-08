@@ -114,8 +114,8 @@ func (h *HTTPObserver) Notify(event AuditEvent) {
 	defer resp.Body.Close()
 }
 
-func (fo *FileObserver) Close() error {
-	return fo.File.Close()
+func (f *FileObserver) Close() error {
+	return f.File.Close()
 }
 
 func (d *Dispatcher) Close() error {
