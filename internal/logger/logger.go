@@ -24,7 +24,7 @@ type Observer interface {
 type Dispatcher struct {
 	mu        sync.RWMutex
 	observers []Observer
-	sem       chan struct{}
+	//sem       chan struct{}
 }
 
 type FileObserver struct {
@@ -48,9 +48,8 @@ func NewHTTPObserver(url string) *HTTPObserver {
 }
 
 func NewDispatcher(cfg config.Config) (*Dispatcher, error) {
-	dispatcher := &Dispatcher{
-		sem: make(chan struct{}, 5000),
-	}
+	dispatcher := &Dispatcher{}
+	// sem: make(chan struct{}, 5000),
 
 	if cfg.FileLogging.Enable {
 		file, err := os.OpenFile(cfg.FileLogging.Path, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
@@ -99,14 +98,15 @@ func (d *Dispatcher) Notify(event AuditEvent) {
 	d.mu.RUnlock()
 
 	for _, o := range observers {
-		d.sem <- struct{}{}
+		o.Notify(event)
+		//d.sem <- struct{}{}
 
-		go func(obs Observer) {
-			defer func() {
-				<-d.sem
-			}()
-			obs.Notify(event)
-		}(o)
+		// go func(obs Observer) {
+		// 	defer func() {
+		// 		<-d.sem
+		// 	}()
+		// 	obs.Notify(event)
+		// }(o)
 	}
 }
 
