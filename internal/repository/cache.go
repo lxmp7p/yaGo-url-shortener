@@ -45,6 +45,10 @@ func NewCache(ctx context.Context, filepath string, file *os.File) *Cache {
 	return cache
 }
 
+func (cache *Cache) Close() error {
+	return cache.file.Close()
+}
+
 // Проверяет наличие shortURL в кэше и в случае отсутствия, добавляет
 // новое значение URL{} в кэш
 func (cache *Cache) Save(ctx context.Context, originalURL, shortURL, userID string) error {

@@ -3,9 +3,13 @@ package logger
 import (
 	"bytes"
 	"encoding/json"
+	"io"
 	"net/http"
 	"os"
 	"sync"
+	"time"
+
+	"github.com/lxmp7p/yaGo-url-shortener/internal/config"
 )
 
 type AuditEvent struct {
@@ -25,13 +29,34 @@ type Dispatcher struct {
 }
 
 type FileObserver struct {
-	Path string
+	File *os.File
 	mu   sync.Mutex
 }
 
 type HTTPObserver struct {
 	URL    string
 	Client *http.Client
+}
+
+func NewDispatcher(cfg config.Config) (*Dispatcher, error) {
+	dispatcher := &Dispatcher{}
+
+	if cfg.FileLogging.Enable {
+		file, err := os.OpenFile(cfg.FileLogging.Path, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+		if err != nil {
+			return dispatcher, err
+		}
+		dispatcher.Register(&FileObserver{File: file})
+	}
+
+	if cfg.RemoteLogging.Enable {
+		dispatcher.Register(&HTTPObserver{
+			URL:    cfg.RemoteLogging.Path,
+			Client: &http.Client{Timeout: 2 * time.Second},
+		})
+	}
+
+	return dispatcher, nil
 }
 
 func (d *Dispatcher) Register(o Observer) {
@@ -73,13 +98,7 @@ func (f *FileObserver) Notify(event AuditEvent) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 
-	file, err := os.OpenFile(f.Path, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
-	if err != nil {
-		return
-	}
-	defer file.Close()
-
-	file.WriteString(string(data) + "\n")
+	f.File.WriteString(string(data) + "\n")
 }
 
 func (h *HTTPObserver) Notify(event AuditEvent) {
@@ -93,4 +112,22 @@ func (h *HTTPObserver) Notify(event AuditEvent) {
 		return
 	}
 	defer resp.Body.Close()
+}
+
+func (fo *FileObserver) Close() error {
+	return fo.File.Close()
+}
+
+func (d *Dispatcher) Close() error {
+	var firstErr error
+
+	for _, obs := range d.observers {
+		if c, ok := obs.(io.Closer); ok {
+			if err := c.Close(); err != nil && firstErr == nil {
+				firstErr = err
+			}
+		}
+	}
+
+	return firstErr
 }

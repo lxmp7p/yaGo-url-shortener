@@ -2,8 +2,6 @@ package handler
 
 import (
 	"database/sql"
-	"net/http"
-	"time"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/lxmp7p/yaGo-url-shortener/internal/config"
@@ -25,22 +23,24 @@ func NewHandler(s *service.ShortenerService) *Handler {
 
 // Структура приложения хранящая все необходимые ресурсы, для запуска сервиса
 type App struct {
-	Config   config.Config
-	Storage  service.URLstorage
-	Logger   *logrus.Logger
-	Database *sql.DB
+	Config     config.Config
+	Storage    service.URLstorage
+	Logger     *logrus.Logger
+	Database   *sql.DB
+	Dispatcher *logger.Dispatcher
 }
 
 // Создает сервис shortenerService, запускает воркер для удаления,
 // создает хэндлер и подключает мидлвари к роуту
 func InitRoutes(app App) chi.Router {
 	app.validateApp()
+
 	shortenerService := &service.ShortenerService{
 		Config:     app.Config,
 		Storage:    app.Storage,
 		Database:   app.Database,
 		DeleteCh:   make(chan service.DeleteTask, 1),
-		Dispatcher: app.registerDispatcher(),
+		Dispatcher: app.Dispatcher,
 	}
 	shortenerService.StartDeleteWorker()
 
@@ -60,22 +60,4 @@ func (app *App) validateApp() {
 	if app.Logger == nil {
 		app.Logger = logrus.New()
 	}
-}
-
-// Регистрирует Dispatcher для паттерна наблюдатель
-func (app *App) registerDispatcher() *logger.Dispatcher {
-	dispatcher := &logger.Dispatcher{}
-
-	if app.Config.FileLogging.Enable {
-		dispatcher.Register(&logger.FileObserver{Path: app.Config.FileLogging.Path})
-	}
-
-	if app.Config.RemoteLogging.Enable {
-		dispatcher.Register(&logger.HTTPObserver{
-			URL:    app.Config.RemoteLogging.Path,
-			Client: &http.Client{Timeout: 2 * time.Second},
-		})
-	}
-
-	return dispatcher
 }

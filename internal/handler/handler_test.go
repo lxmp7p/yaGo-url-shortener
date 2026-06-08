@@ -15,6 +15,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/lxmp7p/yaGo-url-shortener/internal/config"
+	logs "github.com/lxmp7p/yaGo-url-shortener/internal/logger"
 	"github.com/lxmp7p/yaGo-url-shortener/internal/repository"
 	"github.com/lxmp7p/yaGo-url-shortener/internal/service"
 	"github.com/sirupsen/logrus"
@@ -417,10 +418,13 @@ func TestApp_registerDispatcher(t *testing.T) {
 		},
 	}
 
-	d := app.registerDispatcher()
+	d, err := logs.NewDispatcher(app.Config)
 
 	if d == nil {
 		t.Fatal("dispatcher is nil")
+	}
+	if err != nil {
+		t.Fatal("error is not nil")
 	}
 }
 

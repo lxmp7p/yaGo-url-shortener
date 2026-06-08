@@ -38,6 +38,7 @@ type URLstorage interface {
 	Get(ctx context.Context, shortURL string) (string, error)
 	GetByUserID(ctx context.Context, userID string) ([]repository.URL, error)
 	Delete(ctx context.Context, userID string, IDs []string) error
+	Close() error
 }
 
 // Стуктура сервиса для сокращения ссылок

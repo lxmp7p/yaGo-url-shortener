@@ -56,7 +56,7 @@ func TestFileObserver_Notify(t *testing.T) {
 	}
 	defer os.Remove(tmpFile.Name())
 	f := &FileObserver{
-		Path: tmpFile.Name(),
+		File: tmpFile,
 	}
 
 	event := AuditEvent{
