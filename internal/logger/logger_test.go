@@ -86,8 +86,8 @@ func TestHTTPObserver_Notify(t *testing.T) {
 	defer server.Close()
 
 	h := &HTTPObserver{
-		URL:    server.URL,
-		Client: server.Client(),
+		url:    server.URL,
+		client: server.Client(),
 	}
 
 	event := AuditEvent{

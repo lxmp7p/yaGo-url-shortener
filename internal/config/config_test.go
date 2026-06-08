@@ -1,17 +1,15 @@
 package config
 
 import (
-	"os"
 	"testing"
 )
 
 func TestConfig_InitConfig_envOverride(t *testing.T) {
-	os.Setenv("SERVER_ADDRESS", "127.0.0.1:9000")
-	os.Setenv("BASE_URL", "http://test")
-	os.Setenv("FILE_STORAGE_PATH", "/tmp/file")
-	os.Setenv("DATABASE_DSN", "postgres://test")
+	t.Setenv("SERVER_ADDRESS", "127.0.0.1:9000")
+	t.Setenv("BASE_URL", "http://test")
+	t.Setenv("FILE_STORAGE_PATH", "/tmp/file")
+	t.Setenv("DATABASE_DSN", "postgres://test")
 
-	defer os.Clearenv()
 	cfg := NewConfig()
 	result := cfg.InitConfig()
 

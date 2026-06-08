@@ -7,8 +7,8 @@ import (
 	"net/http"
 	"os"
 	"sync"
-	"time"
 
+	"github.com/hashicorp/go-retryablehttp"
 	"github.com/lxmp7p/yaGo-url-shortener/internal/config"
 )
 
@@ -34,8 +34,15 @@ type FileObserver struct {
 }
 
 type HTTPObserver struct {
-	URL    string
-	Client *http.Client
+	url    string
+	client *http.Client
+}
+
+func NewHTTPObserver(url string) *HTTPObserver {
+	retryClient := retryablehttp.NewClient()
+	retryClient.RetryMax = 5
+
+	return NewHTTPObserver(url)
 }
 
 func NewDispatcher(cfg config.Config) (*Dispatcher, error) {
@@ -50,10 +57,10 @@ func NewDispatcher(cfg config.Config) (*Dispatcher, error) {
 	}
 
 	if cfg.RemoteLogging.Enable {
-		dispatcher.Register(&HTTPObserver{
-			URL:    cfg.RemoteLogging.Path,
-			Client: &http.Client{Timeout: 2 * time.Second},
-		})
+		retryClient := retryablehttp.NewClient()
+		retryClient.RetryMax = 5
+
+		dispatcher.Register(NewHTTPObserver(cfg.RemoteLogging.Path))
 	}
 
 	return dispatcher, nil
@@ -96,18 +103,17 @@ func (f *FileObserver) Notify(event AuditEvent) {
 	data, _ := json.Marshal(event)
 
 	f.mu.Lock()
-	defer f.mu.Unlock()
-
 	f.File.WriteString(string(data) + "\n")
+	f.mu.Unlock()
 }
 
 func (h *HTTPObserver) Notify(event AuditEvent) {
 	data, _ := json.Marshal(event)
 
-	req, _ := http.NewRequest("POST", h.URL, bytes.NewBuffer(data))
+	req, _ := http.NewRequest("POST", h.url, bytes.NewBuffer(data))
 	req.Header.Set("Content-Type", "application/json")
 
-	resp, err := h.Client.Do(req)
+	resp, err := h.client.Do(req)
 	if err != nil {
 		return
 	}

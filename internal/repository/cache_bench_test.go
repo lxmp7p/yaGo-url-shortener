@@ -19,15 +19,13 @@ func BenchmarkCacheSaveTest(b *testing.B) {
 	b.ResetTimer()
 	b.ReportAllocs()
 
-	for i := range b.N {
-		if i < b.N {
-			_ = cache.Save(
-				ctx,
-				"minecraft.com",
-				"short",
-				"user",
-			)
-		}
+	for b.Loop() {
+		_ = cache.Save(
+			ctx,
+			"minecraft.com",
+			"short",
+			"user",
+		)
 	}
 }
 
@@ -44,13 +42,11 @@ func BenchmarkCacheLoadTest(b *testing.B) {
 	b.ResetTimer()
 	b.ReportAllocs()
 
-	for i := range b.N {
-		if i < b.N {
-			_, _ = cache.Load(
-				ctx,
-				"short",
-			)
-		}
+	for b.Loop() {
+		_, _ = cache.Load(
+			ctx,
+			"short",
+		)
 	}
 }
 
@@ -67,12 +63,10 @@ func BenchmarkCacheGetTest(b *testing.B) {
 	b.ResetTimer()
 	b.ReportAllocs()
 
-	for i := range b.N {
-		if i < b.N {
-			_, _ = cache.Get(
-				ctx,
-				"short",
-			)
-		}
+	for b.Loop() {
+		_, _ = cache.Get(
+			ctx,
+			"short",
+		)
 	}
 }
