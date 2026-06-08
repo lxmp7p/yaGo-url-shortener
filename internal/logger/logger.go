@@ -42,7 +42,10 @@ func NewHTTPObserver(url string) *HTTPObserver {
 	retryClient := retryablehttp.NewClient()
 	retryClient.RetryMax = 5
 
-	return NewHTTPObserver(url)
+	return &HTTPObserver{
+		url:    url,
+		client: retryClient.StandardClient(),
+	}
 }
 
 func NewDispatcher(cfg config.Config) (*Dispatcher, error) {
