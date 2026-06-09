@@ -49,7 +49,7 @@ func NewHTTPObserver(url string) *HTTPObserver {
 
 func NewDispatcher(cfg config.Config) (*Dispatcher, error) {
 	dispatcher := &Dispatcher{
-		sem: make(chan struct{}, 5000),
+		sem: make(chan struct{}, 5),
 	}
 
 	if cfg.FileLogging.Enable {
