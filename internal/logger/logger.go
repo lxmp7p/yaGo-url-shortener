@@ -97,6 +97,7 @@ func (d *Dispatcher) Notify(event AuditEvent) {
 	d.mu.RUnlock()
 
 	for _, o := range observers {
+		d.wg.Add(1)
 		// o.Notify(event)
 		go func(obs Observer) {
 			d.sem <- struct{}{}
