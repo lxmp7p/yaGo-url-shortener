@@ -26,6 +26,8 @@ type Dispatcher struct {
 	observers []Observer
 	sem       chan struct{}
 	wg        sync.WaitGroup
+	done      chan struct{}
+	once      sync.Once
 }
 
 type FileObserver struct {
@@ -50,7 +52,8 @@ func NewHTTPObserver(url string) *HTTPObserver {
 
 func NewDispatcher(cfg config.Config) (*Dispatcher, error) {
 	dispatcher := &Dispatcher{
-		sem: make(chan struct{}, 10),
+		sem:  make(chan struct{}, 32),
+		done: make(chan struct{}),
 	}
 
 	if cfg.FileLogging.Enable {
@@ -98,16 +101,35 @@ func (d *Dispatcher) Notify(event AuditEvent) {
 
 	for _, o := range observers {
 		d.wg.Add(1)
-		d.sem <- struct{}{}
-		// o.Notify(event)
-		go func(obs Observer) {
-			defer func() {
-				<-d.sem
-				d.wg.Done()
-			}()
-			obs.Notify(event)
-		}(o)
+		go d.notifyAsync(o, event)
 	}
+}
+
+func (d *Dispatcher) notifyAsync(o Observer, event AuditEvent) {
+	defer d.wg.Done()
+
+	select {
+	case d.sem <- struct{}{}:
+	case <-d.done:
+		return
+	}
+
+	defer func() { <-d.sem }()
+
+	defer func() {
+		if r := recover(); r != nil {
+		}
+	}()
+
+	o.Notify(event)
+}
+
+func (d *Dispatcher) Shutdown() error {
+	d.once.Do(func() {
+		close(d.done)
+	})
+	d.wg.Wait()
+	return d.Close()
 }
 
 func (f *FileObserver) Notify(event AuditEvent) {
@@ -140,16 +162,17 @@ func (f *FileObserver) Close() error {
 }
 
 func (d *Dispatcher) Close() error {
-	d.wg.Wait()
 	var firstErr error
+	d.mu.RLock()
+	observers := append([]Observer(nil), d.observers...)
+	d.mu.RUnlock()
 
-	for _, obs := range d.observers {
+	for _, obs := range observers {
 		if c, ok := obs.(io.Closer); ok {
 			if err := c.Close(); err != nil && firstErr == nil {
 				firstErr = err
 			}
 		}
 	}
-
 	return firstErr
 }
