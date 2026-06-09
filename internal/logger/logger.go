@@ -61,9 +61,6 @@ func NewDispatcher(cfg config.Config) (*Dispatcher, error) {
 	}
 
 	if cfg.RemoteLogging.Enable {
-		retryClient := retryablehttp.NewClient()
-		retryClient.RetryMax = 5
-
 		dispatcher.Register(NewHTTPObserver(cfg.RemoteLogging.Path))
 	}
 
