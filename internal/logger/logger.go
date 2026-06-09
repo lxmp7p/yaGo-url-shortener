@@ -25,6 +25,7 @@ type Dispatcher struct {
 	mu        sync.RWMutex
 	observers []Observer
 	sem       chan struct{}
+	wg        sync.WaitGroup
 }
 
 type FileObserver struct {
@@ -101,6 +102,7 @@ func (d *Dispatcher) Notify(event AuditEvent) {
 			d.sem <- struct{}{}
 			defer func() {
 				<-d.sem
+				d.wg.Done()
 			}()
 			obs.Notify(event)
 		}(o)
@@ -137,6 +139,7 @@ func (f *FileObserver) Close() error {
 }
 
 func (d *Dispatcher) Close() error {
+	d.wg.Wait()
 	var firstErr error
 
 	for _, obs := range d.observers {
