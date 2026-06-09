@@ -116,11 +116,6 @@ func (d *Dispatcher) notifyAsync(o Observer, event AuditEvent) {
 
 	defer func() { <-d.sem }()
 
-	defer func() {
-		if r := recover(); r != nil {
-		}
-	}()
-
 	o.Notify(event)
 }
 
