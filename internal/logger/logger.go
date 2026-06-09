@@ -24,10 +24,6 @@ type Observer interface {
 type Dispatcher struct {
 	mu        sync.RWMutex
 	observers []Observer
-	sem       chan struct{}
-	wg        sync.WaitGroup
-	done      chan struct{}
-	once      sync.Once
 }
 
 type FileObserver struct {
@@ -51,10 +47,7 @@ func NewHTTPObserver(url string) *HTTPObserver {
 }
 
 func NewDispatcher(cfg config.Config) (*Dispatcher, error) {
-	dispatcher := &Dispatcher{
-		sem:  make(chan struct{}, 32),
-		done: make(chan struct{}),
-	}
+	dispatcher := &Dispatcher{}
 
 	if cfg.FileLogging.Enable {
 		file, err := os.OpenFile(cfg.FileLogging.Path, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
@@ -100,31 +93,8 @@ func (d *Dispatcher) Notify(event AuditEvent) {
 	d.mu.RUnlock()
 
 	for _, o := range observers {
-		d.wg.Add(1)
-		go d.notifyAsync(o, event)
+		o.Notify(event)
 	}
-}
-
-func (d *Dispatcher) notifyAsync(o Observer, event AuditEvent) {
-	defer d.wg.Done()
-
-	select {
-	case d.sem <- struct{}{}:
-	case <-d.done:
-		return
-	}
-
-	defer func() { <-d.sem }()
-
-	o.Notify(event)
-}
-
-func (d *Dispatcher) Shutdown() error {
-	d.once.Do(func() {
-		close(d.done)
-	})
-	d.wg.Wait()
-	return d.Close()
 }
 
 func (f *FileObserver) Notify(event AuditEvent) {
@@ -158,16 +128,14 @@ func (f *FileObserver) Close() error {
 
 func (d *Dispatcher) Close() error {
 	var firstErr error
-	d.mu.RLock()
-	observers := append([]Observer(nil), d.observers...)
-	d.mu.RUnlock()
 
-	for _, obs := range observers {
+	for _, obs := range d.observers {
 		if c, ok := obs.(io.Closer); ok {
 			if err := c.Close(); err != nil && firstErr == nil {
 				firstErr = err
 			}
 		}
 	}
+
 	return firstErr
 }
