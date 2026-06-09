@@ -49,7 +49,7 @@ func NewHTTPObserver(url string) *HTTPObserver {
 
 func NewDispatcher(cfg config.Config) (*Dispatcher, error) {
 	dispatcher := &Dispatcher{
-		sem: make(chan struct{}, 5),
+		sem: make(chan struct{}, 10),
 	}
 
 	if cfg.FileLogging.Enable {
@@ -97,9 +97,8 @@ func (d *Dispatcher) Notify(event AuditEvent) {
 
 	for _, o := range observers {
 		// o.Notify(event)
-		d.sem <- struct{}{}
-
 		go func(obs Observer) {
+			d.sem <- struct{}{}
 			defer func() {
 				<-d.sem
 			}()
