@@ -100,10 +100,11 @@ func (d *Dispatcher) Notify(event AuditEvent) {
 		d.wg.Add(1)
 		// o.Notify(event)
 		go func(obs Observer) {
+			defer d.wg.Done()
 			d.sem <- struct{}{}
+
 			defer func() {
 				<-d.sem
-				d.wg.Done()
 			}()
 			obs.Notify(event)
 		}(o)
