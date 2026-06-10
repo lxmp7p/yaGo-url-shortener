@@ -15,24 +15,29 @@ var (
 	ErrExist = errors.New("shortURL already exists")
 )
 
+// Структура реализации кэша
 type Cache struct {
 	URLCache map[string]URL
 	mu       sync.RWMutex
 	filename string
+	file     *os.File
 }
 
+// Структура для хранения информации о записи
 type URL struct {
-	UUID        string `json:"id"`
-	Original    string `json:"original_url"`
-	Short       string `json:"short_url"`
-	UserID      string `json:"user_id"`
-	DeletedFlag bool   `json:"is_deleted"`
+	UUID        uuid.UUID `json:"id"`
+	Original    string    `json:"original_url"`
+	Short       string    `json:"short_url"`
+	UserID      string    `json:"user_id"`
+	DeletedFlag bool      `json:"is_deleted"`
 }
 
-func NewCache(ctx context.Context, filepath string) *Cache {
+// Создает новую структуру Cache
+func NewCache(ctx context.Context, filepath string, file *os.File) *Cache {
 	cache := &Cache{
 		URLCache: make(map[string]URL),
 		filename: filepath,
+		file:     file,
 	}
 
 	cache.Load(ctx, filepath)
@@ -40,6 +45,12 @@ func NewCache(ctx context.Context, filepath string) *Cache {
 	return cache
 }
 
+func (cache *Cache) Close() error {
+	return cache.file.Close()
+}
+
+// Проверяет наличие shortURL в кэше и в случае отсутствия, добавляет
+// новое значение URL{} в кэш
 func (cache *Cache) Save(ctx context.Context, originalURL, shortURL, userID string) error {
 	cache.mu.Lock()
 	defer cache.mu.Unlock()
@@ -54,25 +65,18 @@ func (cache *Cache) Save(ctx context.Context, originalURL, shortURL, userID stri
 		UserID:   userID,
 	}
 
-	record := URL{
-		UUID:     uuid.NewString(),
+	data, err := json.Marshal(URL{
+		UUID:     uuid.New(),
 		Short:    shortURL,
 		Original: originalURL,
 		UserID:   userID,
-	}
+	})
 
-	data, err := json.Marshal(record)
 	if err != nil {
 		return err
 	}
 
-	file, err := os.OpenFile(cache.filename, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
-	if err != nil {
-		return err
-	}
-	defer file.Close()
-
-	_, err = file.Write(append(data, '\n'))
+	_, err = cache.file.Write(append(data, '\n'))
 	if err != nil {
 		return err
 	}
@@ -80,6 +84,8 @@ func (cache *Cache) Save(ctx context.Context, originalURL, shortURL, userID stri
 	return nil
 }
 
+// Возвращает значение из кэша. В случае, если такого значения нет
+// возвращает ошибку ErrURLNotFound
 func (cache *Cache) Get(ctx context.Context, shortURL string) (string, error) {
 	cache.mu.RLock()
 	defer cache.mu.RUnlock()
@@ -92,6 +98,7 @@ func (cache *Cache) Get(ctx context.Context, shortURL string) (string, error) {
 	return URL.Original, nil
 }
 
+// Возвращает все значения сохраненные пользователем по его userID
 func (cache *Cache) GetByUserID(ctx context.Context, userID string) ([]URL, error) {
 	cache.mu.RLock()
 	defer cache.mu.RUnlock()
@@ -105,6 +112,8 @@ func (cache *Cache) GetByUserID(ctx context.Context, userID string) ([]URL, erro
 	return urls, nil
 }
 
+// Открывает файл на чтение, получает из него все сохраненные записи
+// и записывает их в Cache
 func (cache *Cache) Load(ctx context.Context, shortURL string) (*Cache, error) {
 	cache.mu.Lock()
 	defer cache.mu.Unlock()
@@ -117,12 +126,12 @@ func (cache *Cache) Load(ctx context.Context, shortURL string) (*Cache, error) {
 
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
-		line := scanner.Text()
+		line := scanner.Bytes()
 		record := URL{}
-		if err := json.Unmarshal([]byte(line), &record); err != nil {
+		if err := json.Unmarshal(line, &record); err != nil {
 			continue
 		}
-		cache.URLCache[record.Short] = URL{Original: record.Original}
+		cache.URLCache[record.Short] = record
 	}
 	return cache, nil
 }

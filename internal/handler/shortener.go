@@ -5,6 +5,7 @@ import (
 	"github.com/lxmp7p/yaGo-url-shortener/internal/service"
 )
 
+// Регистрирует все роуты приложения
 func ShortenerRoutes(shortenerService *service.ShortenerService) chi.Router {
 	r := chi.NewRouter()
 	r.Post("/", shortenerService.CreateShortURL)

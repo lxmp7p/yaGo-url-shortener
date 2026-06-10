@@ -35,7 +35,7 @@ func TestNewCache(t *testing.T) {
 			tmpFile, err := os.CreateTemp("", "cache")
 			require.NoError(t, err)
 			defer os.Remove(tmpFile.Name())
-			got := NewCache(context.Background(), tmpFile.Name())
+			got := NewCache(context.Background(), tmpFile.Name(), tmpFile)
 			assert.Equal(t, tmpFile.Name(), got.filename)
 			assert.Empty(t, got.URLCache)
 		})
@@ -67,7 +67,7 @@ func TestCache_Save(t *testing.T) {
 			defer os.Remove(tmpFile.Name())
 			defer tmpFile.Close()
 
-			cache := NewCache(context.Background(), tmpFile.Name())
+			cache := NewCache(context.Background(), tmpFile.Name(), tmpFile)
 			gotErr := cache.Save(context.Background(), tt.originalURL, tt.shortURL, "userId")
 			if gotErr != nil {
 				if !tt.wantErr {
@@ -107,7 +107,7 @@ func TestCache_Get(t *testing.T) {
 			defer os.Remove(tmpFile.Name())
 			defer tmpFile.Close()
 
-			cache := NewCache(context.Background(), tt.filepath)
+			cache := NewCache(context.Background(), tt.filepath, tmpFile)
 			got, gotErr := cache.Get(context.Background(), tt.shortURL)
 			if gotErr != nil {
 				if !tt.wantErr {
@@ -126,6 +126,12 @@ func TestCache_Get(t *testing.T) {
 }
 
 func TestCache_GetByUserID(t *testing.T) {
+	tmpFile, err := os.CreateTemp("", "tmp")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer os.Remove(tmpFile.Name())
+	defer tmpFile.Close()
 	tests := []struct {
 		name     string
 		filepath string
@@ -137,7 +143,7 @@ func TestCache_GetByUserID(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			cache := NewCache(context.Background(), tt.filepath)
+			cache := NewCache(context.Background(), tt.filepath, tmpFile)
 			cache.URLCache = map[string]URL{
 				"1": {Short: "a.ru", Original: "yandex.ru", UserID: "user1"},
 				"2": {Short: "b.ru", Original: "yandex.ru", UserID: "user1"},

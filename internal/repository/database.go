@@ -19,6 +19,10 @@ func NewDatabaseCache(db *sql.DB) *DatabaseCache {
 	return cache
 }
 
+func (cache *DatabaseCache) Close() error {
+	return cache.db.Close()
+}
+
 type URLError struct {
 	Short string
 }
