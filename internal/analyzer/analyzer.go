@@ -2,6 +2,7 @@ package analyzer
 
 import (
 	"go/ast"
+	"strings"
 
 	"golang.org/x/tools/go/analysis"
 )
@@ -15,6 +16,11 @@ var Analyzer = &analysis.Analyzer{
 func run(pass *analysis.Pass) (interface{}, error) {
 	for _, file := range pass.Files {
 		for _, decl := range file.Decls {
+			filename := pass.Fset.File(file.Pos()).Name()
+			if strings.HasSuffix(filename, "_test.go") {
+				continue
+			}
+
 			fn, ok := decl.(*ast.FuncDecl)
 			if !ok {
 				continue

@@ -129,10 +129,10 @@ func TestGetShortURLHandler(t *testing.T) {
 	}
 }
 
-func ExampleShortenerRoutes_сreateShortURL(t *testing.T) {
+func ExampleShortenerRoutes_сreateShortURL() {
 	tmpFile, err := os.CreateTemp("", "tmp")
 	if err != nil {
-		t.Fatal(err)
+		panic(err)
 	}
 	defer os.Remove(tmpFile.Name())
 	defer tmpFile.Close()
@@ -169,10 +169,10 @@ func ExampleShortenerRoutes_сreateShortURL(t *testing.T) {
 	// 201
 }
 
-func ExampleShortenerRoutes_getOriginalURL(t *testing.T) {
+func ExampleShortenerRoutes_getOriginalURL() {
 	tmpFile, err := os.CreateTemp("", "tmp")
 	if err != nil {
-		t.Fatal(err)
+		panic(err)
 	}
 	defer os.Remove(tmpFile.Name())
 	defer tmpFile.Close()
@@ -219,10 +219,10 @@ func ExampleShortenerRoutes_getOriginalURL(t *testing.T) {
 	// 307
 }
 
-func ExampleShortenerRoutes_сreateShortURLApi(t *testing.T) {
+func ExampleShortenerRoutes_сreateShortURLApi() {
 	tmpFile, err := os.CreateTemp("", "tmp")
 	if err != nil {
-		t.Fatal(err)
+		panic(err)
 	}
 	defer os.Remove(tmpFile.Name())
 	defer tmpFile.Close()
@@ -259,10 +259,10 @@ func ExampleShortenerRoutes_сreateShortURLApi(t *testing.T) {
 	// 201
 }
 
-func ExampleShortenerRoutes_createShortURLBatchApi(t *testing.T) {
+func ExampleShortenerRoutes_createShortURLBatchApi() {
 	tmpFile, err := os.CreateTemp("", "tmp")
 	if err != nil {
-		t.Fatal(err)
+		panic(err)
 	}
 	defer os.Remove(tmpFile.Name())
 	defer tmpFile.Close()
@@ -305,10 +305,10 @@ func ExampleShortenerRoutes_createShortURLBatchApi(t *testing.T) {
 	// 201
 }
 
-func ExampleShortenerRoutes_getUsersURLs(t *testing.T) {
+func ExampleShortenerRoutes_getUsersURLs() {
 	tmpFile, err := os.CreateTemp("", "tmp")
 	if err != nil {
-		t.Fatal(err)
+		panic(err)
 	}
 	defer os.Remove(tmpFile.Name())
 	defer tmpFile.Close()
@@ -354,10 +354,10 @@ func ExampleShortenerRoutes_getUsersURLs(t *testing.T) {
 	// 200
 }
 
-func ExampleShortenerRoutes_deleteUsersURLs(t *testing.T) {
+func ExampleShortenerRoutes_deleteUsersURLs() {
 	tmpFile, err := os.CreateTemp("", "tmp")
 	if err != nil {
-		t.Fatal(err)
+		panic(err)
 	}
 	defer os.Remove(tmpFile.Name())
 	defer tmpFile.Close()
