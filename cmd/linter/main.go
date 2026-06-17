@@ -1,4 +1,4 @@
-package linter
+package main
 
 import (
 	"golang.org/x/tools/go/analysis/singlechecker"

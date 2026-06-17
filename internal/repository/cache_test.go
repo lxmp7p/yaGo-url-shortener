@@ -2,7 +2,6 @@ package repository
 
 import (
 	"context"
-	"log"
 	"os"
 	"testing"
 
@@ -62,7 +61,7 @@ func TestCache_Save(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			tmpFile, err := os.CreateTemp("", "tmp")
 			if err != nil {
-				log.Fatal(err)
+				t.Fatal(err)
 			}
 			defer os.Remove(tmpFile.Name())
 			defer tmpFile.Close()
@@ -102,7 +101,7 @@ func TestCache_Get(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			tmpFile, err := os.CreateTemp("", "tmp")
 			if err != nil {
-				log.Fatal(err)
+				t.Fatal(err)
 			}
 			defer os.Remove(tmpFile.Name())
 			defer tmpFile.Close()
@@ -128,7 +127,7 @@ func TestCache_Get(t *testing.T) {
 func TestCache_GetByUserID(t *testing.T) {
 	tmpFile, err := os.CreateTemp("", "tmp")
 	if err != nil {
-		log.Fatal(err)
+		t.Fatal(err)
 	}
 	defer os.Remove(tmpFile.Name())
 	defer tmpFile.Close()

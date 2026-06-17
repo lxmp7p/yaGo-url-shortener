@@ -5,7 +5,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"log"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -29,7 +28,7 @@ func TestGetShortURLHandler(t *testing.T) {
 
 	tmpFile, err := os.CreateTemp("", "tmp-*.json")
 	if err != nil {
-		log.Fatal(err)
+		t.Fatal(err)
 	}
 	defer os.Remove(tmpFile.Name())
 	defer tmpFile.Close()
@@ -130,10 +129,10 @@ func TestGetShortURLHandler(t *testing.T) {
 	}
 }
 
-func ExampleShortenerRoutes_сreateShortURL() {
+func ExampleShortenerRoutes_сreateShortURL(t *testing.T) {
 	tmpFile, err := os.CreateTemp("", "tmp")
 	if err != nil {
-		log.Fatal(err)
+		t.Fatal(err)
 	}
 	defer os.Remove(tmpFile.Name())
 	defer tmpFile.Close()
@@ -170,10 +169,10 @@ func ExampleShortenerRoutes_сreateShortURL() {
 	// 201
 }
 
-func ExampleShortenerRoutes_getOriginalURL() {
+func ExampleShortenerRoutes_getOriginalURL(t *testing.T) {
 	tmpFile, err := os.CreateTemp("", "tmp")
 	if err != nil {
-		log.Fatal(err)
+		t.Fatal(err)
 	}
 	defer os.Remove(tmpFile.Name())
 	defer tmpFile.Close()
@@ -220,10 +219,10 @@ func ExampleShortenerRoutes_getOriginalURL() {
 	// 307
 }
 
-func ExampleShortenerRoutes_сreateShortURLApi() {
+func ExampleShortenerRoutes_сreateShortURLApi(t *testing.T) {
 	tmpFile, err := os.CreateTemp("", "tmp")
 	if err != nil {
-		log.Fatal(err)
+		t.Fatal(err)
 	}
 	defer os.Remove(tmpFile.Name())
 	defer tmpFile.Close()
@@ -260,10 +259,10 @@ func ExampleShortenerRoutes_сreateShortURLApi() {
 	// 201
 }
 
-func ExampleShortenerRoutes_createShortURLBatchApi() {
+func ExampleShortenerRoutes_createShortURLBatchApi(t *testing.T) {
 	tmpFile, err := os.CreateTemp("", "tmp")
 	if err != nil {
-		log.Fatal(err)
+		t.Fatal(err)
 	}
 	defer os.Remove(tmpFile.Name())
 	defer tmpFile.Close()
@@ -306,10 +305,10 @@ func ExampleShortenerRoutes_createShortURLBatchApi() {
 	// 201
 }
 
-func ExampleShortenerRoutes_getUsersURLs() {
+func ExampleShortenerRoutes_getUsersURLs(t *testing.T) {
 	tmpFile, err := os.CreateTemp("", "tmp")
 	if err != nil {
-		log.Fatal(err)
+		t.Fatal(err)
 	}
 	defer os.Remove(tmpFile.Name())
 	defer tmpFile.Close()
@@ -355,10 +354,10 @@ func ExampleShortenerRoutes_getUsersURLs() {
 	// 200
 }
 
-func ExampleShortenerRoutes_deleteUsersURLs() {
+func ExampleShortenerRoutes_deleteUsersURLs(t *testing.T) {
 	tmpFile, err := os.CreateTemp("", "tmp")
 	if err != nil {
-		log.Fatal(err)
+		t.Fatal(err)
 	}
 	defer os.Remove(tmpFile.Name())
 	defer tmpFile.Close()
