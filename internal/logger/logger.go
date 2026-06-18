@@ -17,20 +17,24 @@ type AuditEvent struct {
 	URL    string `json:"url"`
 }
 
+// generate:reset
 type Observer interface {
 	Notify(event AuditEvent)
 }
 
+// generate:reset
 type Dispatcher struct {
 	mu        sync.RWMutex
 	observers []Observer
 }
 
+// generate:reset
 type FileObserver struct {
 	File *os.File
 	mu   sync.Mutex
 }
 
+// generate:reset
 type HTTPObserver struct {
 	url    string
 	client *retryablehttp.Client

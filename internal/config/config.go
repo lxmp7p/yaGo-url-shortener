@@ -5,6 +5,7 @@ import (
 	"os"
 )
 
+// generate:reset
 type Config struct {
 	Addr            string
 	ResultAddr      string
@@ -14,6 +15,7 @@ type Config struct {
 	RemoteLogging   LoggerInfo
 }
 
+// generate:reset
 type LoggerInfo struct {
 	Path   string
 	Enable bool

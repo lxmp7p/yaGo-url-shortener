@@ -13,6 +13,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+// generate:reset
 type logRequest struct {
 	URI          string
 	Method       string
@@ -28,6 +29,7 @@ func (lr logRequest) String() string {
 	)
 }
 
+// generate:reset
 type loggerResponseWriter struct {
 	http.ResponseWriter
 	size       int
@@ -45,6 +47,7 @@ func (lw *loggerResponseWriter) WriteHeader(code int) {
 	lw.ResponseWriter.WriteHeader(code)
 }
 
+// generate:reset
 type compressResponseWriter struct {
 	http.ResponseWriter
 	Writer *gzip.Writer

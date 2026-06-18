@@ -7,6 +7,7 @@ import (
 	"github.com/google/uuid"
 )
 
+// generate:reset
 type DatabaseCache struct {
 	db *sql.DB
 }
@@ -23,6 +24,7 @@ func (cache *DatabaseCache) Close() error {
 	return cache.db.Close()
 }
 
+// generate:reset
 type URLError struct {
 	Short string
 }
