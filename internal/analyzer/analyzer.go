@@ -2,6 +2,7 @@ package analyzer
 
 import (
 	"go/ast"
+	"go/types"
 	"strings"
 
 	"golang.org/x/tools/go/analysis"
@@ -62,11 +63,21 @@ func checkExit(call *ast.CallExpr, pass *analysis.Pass, isMain bool) {
 		return
 	}
 
-	if pkg.Name == "os" && sel.Sel.Name == "Exit" && !isMain {
-		pass.Reportf(call.Pos(), "os exit")
+	obj, ok := pass.TypesInfo.Uses[pkg]
+	if !ok {
+		return
 	}
 
-	if pkg.Name == "log" && sel.Sel.Name == "Fatal" && !isMain {
+	pkgName, ok := obj.(*types.PkgName)
+	if !ok {
+		return
+	}
+
+	switch {
+	case pkgName.Imported().Path() == "os" && sel.Sel.Name == "Exit" && !isMain:
+		pass.Reportf(call.Pos(), "os exit")
+
+	case pkgName.Imported().Path() == "log" && sel.Sel.Name == "Fatal" && !isMain:
 		pass.Reportf(call.Pos(), "log.Fatal is forbidden outside main")
 	}
 }

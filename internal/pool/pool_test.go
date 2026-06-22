@@ -15,10 +15,13 @@ func (t *testObject) Reset() {
 func TestPoolGetCreatesObject(t *testing.T) {
 	calls := 0
 
-	p := New(func() *testObject {
+	p, err := New(func() *testObject {
 		calls++
 		return &testObject{Value: 42}
 	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
 
 	obj := p.Get()
 
@@ -36,9 +39,12 @@ func TestPoolGetCreatesObject(t *testing.T) {
 }
 
 func TestPoolPutCallsReset(t *testing.T) {
-	p := New(func() *testObject {
+	p, err := New(func() *testObject {
 		return &testObject{Value: 100}
 	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
 
 	obj := p.Get()
 
@@ -56,9 +62,12 @@ func TestPoolPutCallsReset(t *testing.T) {
 }
 
 func TestPoolReusesObject(t *testing.T) {
-	p := New(func() *testObject {
+	p, err := New(func() *testObject {
 		return &testObject{}
 	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
 
 	obj1 := p.Get()
 	obj1.Value = 10
@@ -73,5 +82,17 @@ func TestPoolReusesObject(t *testing.T) {
 
 	if obj2.Value != 0 {
 		t.Fatalf("expected reset value, got %d", obj2.Value)
+	}
+}
+
+func TestNilFactory(t *testing.T) {
+	p, err := New[*testObject](nil)
+
+	if err == nil {
+		t.Fatal("expected error")
+	}
+
+	if p != nil {
+		t.Fatal("expected nil pool")
 	}
 }

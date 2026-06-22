@@ -1,6 +1,9 @@
 package pool
 
-import "sync"
+import (
+	"errors"
+	"sync"
+)
 
 // Resettable defines the interface for objects that can be reset.
 type Resettable interface {
@@ -13,14 +16,17 @@ type Pool[T Resettable] struct {
 }
 
 // New creates a new Pool. It requires a factory function to create new instances when the pool is empty.
-func New[T Resettable](factory func() T) *Pool[T] {
+func New[T Resettable](factory func() T) (*Pool[T], error) {
+	if factory == nil {
+		return nil, errors.New("empty factory func")
+	}
 	return &Pool[T]{
 		pool: sync.Pool{
 			New: func() any {
 				return factory()
 			},
 		},
-	}
+	}, nil
 }
 
 // Get retrieves an object from the pool or creates a new one if the pool is empty.

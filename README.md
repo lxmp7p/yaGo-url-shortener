@@ -1,5 +1,13 @@
 # go-musthave-shortener-tpl
 
+При сборке приложения можно передать информацию о версии, дате сборки и коммите через флаг -ldflags:
+
+go build -ldflags "\
+-X 'main.buildVersion=v1.2.3' \
+-X 'main.buildDate=$(date -u +%Y-%m-%dT%H:%M:%SZ)' \
+-X 'main.buildCommit=$(git rev-parse --short HEAD)'"
+
+
 Шаблон репозитория для трека «Сервис сокращения URL».
 
 ## Начало работы

@@ -43,45 +43,33 @@ func Run(root string) error {
 func getStruct(pkgs []*packages.Package) {
 	for _, pkg := range pkgs {
 		var structs []StructInfo
-		fmt.Println("Package:", pkg.PkgPath)
 
 		for _, file := range pkg.Syntax {
 			for _, decl := range file.Decls {
-
 				genDecl, ok := decl.(*ast.GenDecl)
-				if !ok {
-					continue
-				}
-
-				if genDecl.Tok != token.TYPE {
-					continue
-				}
-
-				if !hasGenerateReset(genDecl.Doc) {
+				if !ok || genDecl.Tok != token.TYPE || !hasGenerateReset(genDecl.Doc) {
 					continue
 				}
 
 				for _, spec := range genDecl.Specs {
-
 					typeSpec, ok := spec.(*ast.TypeSpec)
 					if !ok {
 						continue
 					}
 
-					_, ok = typeSpec.Type.(*ast.StructType)
-					if !ok {
+					if _, ok := typeSpec.Type.(*ast.StructType); !ok {
 						continue
 					}
 
-					info, ok := getStructInfo(pkg, typeSpec)
-					if ok {
+					if info, ok := getStructInfo(pkg, typeSpec); ok {
 						structs = append(structs, info)
 					}
 				}
-				if hasGenerateReset(genDecl.Doc) {
-					generateFileCode(pkg, structs)
-				}
 			}
+		}
+
+		if len(structs) > 0 {
+			generateFileCode(pkg, structs)
 		}
 	}
 }
@@ -116,18 +104,6 @@ func getStructInfo(pkg *packages.Package, typeSpec *ast.TypeSpec) (StructInfo, b
 	if !ok {
 		return StructInfo{}, false
 
-	}
-
-	fmt.Println("Struct:", typeSpec.Name.Name)
-
-	for i := 0; i < strct.NumFields(); i++ {
-		field := strct.Field(i)
-
-		fmt.Printf(
-			"  %s : %s\n",
-			field.Name(),
-			field.Type().String(),
-		)
 	}
 
 	return StructInfo{
@@ -278,7 +254,7 @@ func addImportIfNeeded(imports map[string]string, t *types.Named, currentPkgPath
 }
 
 func hasReset(t types.Type) bool {
-	ms := types.NewMethodSet(t)
+	ms := types.NewMethodSet(types.NewPointer(t))
 	for i := 0; i < ms.Len(); i++ {
 		if ms.At(i).Obj().Name() == "Reset" {
 			return true
