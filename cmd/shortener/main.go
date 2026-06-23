@@ -21,7 +21,14 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+var (
+	buildVersion string = "N/A"
+	buildDate    string = "N/A"
+	buildCommit  string = "N/A"
+)
+
 func main() {
+	printBuildInfo()
 	go func() {
 		log.Println(http.ListenAndServe("localhost:6060", nil))
 	}()
@@ -75,4 +82,10 @@ func selectStorage(cfg config.Config, database *sql.DB) (service.URLstorage, err
 		return repository.NewCache(context.Background(), cfg.FileStoragePath, file), nil
 	}
 	return repository.NewCache(context.Background(), "", file), nil
+}
+
+func printBuildInfo() {
+	log.Printf("Build version: %s\n", buildVersion)
+	log.Printf("Build date: %s\n", buildDate)
+	log.Printf("Build commit: %s\n", buildCommit)
 }

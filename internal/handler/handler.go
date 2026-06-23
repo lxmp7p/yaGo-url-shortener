@@ -11,6 +11,7 @@ import (
 )
 
 // Структура хэндлера хранящая в себе все необходимые сервисы
+// generate:reset
 type Handler struct {
 	Service *service.ShortenerService
 }
@@ -22,6 +23,7 @@ func NewHandler(s *service.ShortenerService) *Handler {
 }
 
 // Структура приложения хранящая все необходимые ресурсы, для запуска сервиса
+// generate:reset
 type App struct {
 	Config     config.Config
 	Storage    service.URLstorage

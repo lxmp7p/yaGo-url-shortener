@@ -5,7 +5,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"log"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -29,7 +28,7 @@ func TestGetShortURLHandler(t *testing.T) {
 
 	tmpFile, err := os.CreateTemp("", "tmp-*.json")
 	if err != nil {
-		log.Fatal(err)
+		t.Fatal(err)
 	}
 	defer os.Remove(tmpFile.Name())
 	defer tmpFile.Close()
@@ -133,7 +132,7 @@ func TestGetShortURLHandler(t *testing.T) {
 func ExampleShortenerRoutes_сreateShortURL() {
 	tmpFile, err := os.CreateTemp("", "tmp")
 	if err != nil {
-		log.Fatal(err)
+		panic(err)
 	}
 	defer os.Remove(tmpFile.Name())
 	defer tmpFile.Close()
@@ -173,7 +172,7 @@ func ExampleShortenerRoutes_сreateShortURL() {
 func ExampleShortenerRoutes_getOriginalURL() {
 	tmpFile, err := os.CreateTemp("", "tmp")
 	if err != nil {
-		log.Fatal(err)
+		panic(err)
 	}
 	defer os.Remove(tmpFile.Name())
 	defer tmpFile.Close()
@@ -223,7 +222,7 @@ func ExampleShortenerRoutes_getOriginalURL() {
 func ExampleShortenerRoutes_сreateShortURLApi() {
 	tmpFile, err := os.CreateTemp("", "tmp")
 	if err != nil {
-		log.Fatal(err)
+		panic(err)
 	}
 	defer os.Remove(tmpFile.Name())
 	defer tmpFile.Close()
@@ -263,7 +262,7 @@ func ExampleShortenerRoutes_сreateShortURLApi() {
 func ExampleShortenerRoutes_createShortURLBatchApi() {
 	tmpFile, err := os.CreateTemp("", "tmp")
 	if err != nil {
-		log.Fatal(err)
+		panic(err)
 	}
 	defer os.Remove(tmpFile.Name())
 	defer tmpFile.Close()
@@ -309,7 +308,7 @@ func ExampleShortenerRoutes_createShortURLBatchApi() {
 func ExampleShortenerRoutes_getUsersURLs() {
 	tmpFile, err := os.CreateTemp("", "tmp")
 	if err != nil {
-		log.Fatal(err)
+		panic(err)
 	}
 	defer os.Remove(tmpFile.Name())
 	defer tmpFile.Close()
@@ -358,7 +357,7 @@ func ExampleShortenerRoutes_getUsersURLs() {
 func ExampleShortenerRoutes_deleteUsersURLs() {
 	tmpFile, err := os.CreateTemp("", "tmp")
 	if err != nil {
-		log.Fatal(err)
+		panic(err)
 	}
 	defer os.Remove(tmpFile.Name())
 	defer tmpFile.Close()

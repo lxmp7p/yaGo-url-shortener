@@ -16,6 +16,7 @@ var (
 )
 
 // Структура реализации кэша
+// generate:reset
 type Cache struct {
 	URLCache map[string]URL
 	mu       sync.RWMutex
@@ -24,6 +25,7 @@ type Cache struct {
 }
 
 // Структура для хранения информации о записи
+// generate:reset
 type URL struct {
 	UUID        uuid.UUID `json:"id"`
 	Original    string    `json:"original_url"`

@@ -27,6 +27,7 @@ const (
 	Chars             = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 )
 
+// generate:reset
 type DeleteTask struct {
 	UserID string
 	IDs    []string
@@ -42,6 +43,7 @@ type URLstorage interface {
 }
 
 // Стуктура сервиса для сокращения ссылок
+// generate:reset
 type ShortenerService struct {
 	Config     config.Config
 	Storage    URLstorage
@@ -52,10 +54,12 @@ type ShortenerService struct {
 	Dispatcher *logger.Dispatcher
 }
 
+// generate:reset
 type ShortenRequest struct {
 	URL string `json:"url"`
 }
 
+// generate:reset
 type ShortenResponse struct {
 	Result string `json:"result"`
 }
@@ -67,11 +71,13 @@ func (sr *ShortenRequest) Bind(r *http.Request) error {
 	return nil
 }
 
+// generate:reset
 type Original struct {
 	ID          string `json:"correlation_id"`
 	OriginalURL string `json:"original_url"`
 }
 
+// generate:reset
 type Shorten struct {
 	ID       string `json:"correlation_id"`
 	ShortURL string `json:"short_url"`
