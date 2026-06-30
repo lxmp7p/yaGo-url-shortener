@@ -1,6 +1,7 @@
 package config
 
 import (
+	"encoding/json"
 	"flag"
 	"log"
 	"os"
@@ -9,13 +10,13 @@ import (
 
 // generate:reset
 type Config struct {
-	Addr            string
-	ResultAddr      string
-	FileStoragePath string
-	DatabaseDsn     string
+	Addr            string `json:"server_address"`
+	ResultAddr      string `json:"base_url"`
+	FileStoragePath string `json:"file_storage_path"`
+	DatabaseDsn     string `json:"database_dsn"`
+	EnableHTTPS     bool   `json:"enable_https"`
 	FileLogging     LoggerInfo
 	RemoteLogging   LoggerInfo
-	EnableHTTPS     bool
 }
 
 // generate:reset
@@ -34,45 +35,67 @@ func NewConfig() Config {
 }
 
 func (cfg *Config) InitConfig() Config {
-	cfg.argsConfigurator()
-	cfg.envConfigurator()
+	cfg.setDefaults()
 
-	return Config{
-		Addr:            cfg.Addr,
-		ResultAddr:      cfg.ResultAddr,
-		FileStoragePath: cfg.FileStoragePath,
-		DatabaseDsn:     cfg.DatabaseDsn,
-		RemoteLogging:   cfg.RemoteLogging,
-		FileLogging:     cfg.FileLogging,
+	configPath := cfg.getConfigPath()
+
+	if configPath != "" {
+		if err := cfg.loadConfig(configPath); err != nil {
+			log.Fatal(err)
+		}
 	}
+
+	cfg.envConfigurator()
+	cfg.argsConfigurator()
+
+	return *cfg
+}
+
+func (cfg *Config) setDefaults() {
+	cfg.Addr = "localhost:8080"
+	cfg.ResultAddr = "http://localhost:8080"
+	cfg.FileStoragePath = "storageFile"
+}
+
+func (cfg *Config) getConfigPath() string {
+	path := os.Getenv("CONFIG")
+
+	fs := flag.NewFlagSet(os.Args[0], flag.ContinueOnError)
+
+	fs.StringVar(&path, "c", path, "config path")
+	fs.StringVar(&path, "config", path, "config path")
+
+	_ = fs.Parse(os.Args[1:])
+
+	return path
 }
 
 func (cfg *Config) argsConfigurator() {
-	addr := flag.String("a", "localhost:8080", "server ip:port")
-	resultAddr := flag.String("b", "http://localhost:8080", "server result ip:port")
-	fileStoragePath := flag.String("f", "storageFile", "file storage path")
-	databaseDsn := flag.String("d", "", "database connection string")
-	fileLoggingPath := flag.String("audit-file", "", "file logging path")
-	remoteLoggingURL := flag.String("audit-url", "", "remote logging url")
-	flag.BoolVar(&cfg.EnableHTTPS, "s", false, "enable HTTPS")
+	flag.StringVar(&cfg.Addr, "a", cfg.Addr, "server ip:port")
+	flag.StringVar(&cfg.ResultAddr, "b", cfg.ResultAddr, "base url")
+	flag.StringVar(&cfg.FileStoragePath, "f", cfg.FileStoragePath, "storage path")
+	flag.StringVar(&cfg.DatabaseDsn, "d", cfg.DatabaseDsn, "database dsn")
+
+	fileLogging := flag.String("audit-file", "", "")
+	remoteLogging := flag.String("audit-url", "", "")
+
+	flag.BoolVar(&cfg.EnableHTTPS, "s", cfg.EnableHTTPS, "enable https")
 
 	flag.Parse()
 
-	cfg.Addr = *addr
-	cfg.ResultAddr = *resultAddr
-	cfg.FileStoragePath = *fileStoragePath
-	cfg.DatabaseDsn = *databaseDsn
-
-	if *fileLoggingPath != "" {
-		cfg.FileLogging.setPath(*fileLoggingPath)
+	if *fileLogging != "" {
+		cfg.FileLogging.setPath(*fileLogging)
 	}
 
-	if *remoteLoggingURL != "" {
-		cfg.RemoteLogging.setPath(*remoteLoggingURL)
+	if *remoteLogging != "" {
+		cfg.RemoteLogging.setPath(*remoteLogging)
 	}
 }
 
 func (cfg *Config) envConfigurator() {
+	if configPath := os.Getenv("CONFIG"); configPath != "" {
+		cfg.loadConfig(configPath)
+	}
 	if envAddr := os.Getenv("SERVER_ADDRESS"); envAddr != "" {
 		cfg.Addr = envAddr
 	}
@@ -99,4 +122,33 @@ func (cfg *Config) envConfigurator() {
 		}
 		cfg.EnableHTTPS = enableHTTPS
 	}
+}
+
+func (cfg *Config) loadConfig(path string) error {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return err
+	}
+
+	var fc Config
+	if err := json.Unmarshal(data, &fc); err != nil {
+		return err
+	}
+
+	if fc.Addr != "" {
+		cfg.Addr = fc.Addr
+	}
+	if fc.ResultAddr != "" {
+		cfg.ResultAddr = fc.ResultAddr
+	}
+	if fc.FileStoragePath != "" {
+		cfg.FileStoragePath = fc.FileStoragePath
+	}
+	if fc.DatabaseDsn != "" {
+		cfg.DatabaseDsn = fc.DatabaseDsn
+	}
+
+	cfg.EnableHTTPS = fc.EnableHTTPS
+
+	return nil
 }
