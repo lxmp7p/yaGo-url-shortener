@@ -2,7 +2,9 @@ package config
 
 import (
 	"flag"
+	"log"
 	"os"
+	"strconv"
 )
 
 // generate:reset
@@ -13,6 +15,7 @@ type Config struct {
 	DatabaseDsn     string
 	FileLogging     LoggerInfo
 	RemoteLogging   LoggerInfo
+	EnableHTTPS     bool
 }
 
 // generate:reset
@@ -51,6 +54,7 @@ func (cfg *Config) argsConfigurator() {
 	databaseDsn := flag.String("d", "", "database connection string")
 	fileLoggingPath := flag.String("audit-file", "", "file logging path")
 	remoteLoggingURL := flag.String("audit-url", "", "remote logging url")
+	flag.BoolVar(&cfg.EnableHTTPS, "s", false, "enable HTTPS")
 
 	flag.Parse()
 
@@ -86,5 +90,13 @@ func (cfg *Config) envConfigurator() {
 	}
 	if envRemoteLoggingPath := os.Getenv("AUDIT_URL"); envRemoteLoggingPath != "" {
 		cfg.RemoteLogging.setPath(envRemoteLoggingPath)
+	}
+	value := os.Getenv("ENABLE_HTTPS")
+	if value != "" {
+		enableHTTPS, err := strconv.ParseBool(value)
+		if err != nil {
+			log.Fatalf("invalid ENABLE_HTTPS: %v", err)
+		}
+		cfg.EnableHTTPS = enableHTTPS
 	}
 }
