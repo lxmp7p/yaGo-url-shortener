@@ -64,7 +64,13 @@ func main() {
 	})
 
 	logger.Infof("Starting server on %s", cfg.Addr)
-	err = http.ListenAndServe(cfg.Addr, r)
+
+	if cfg.EnableHTTPS {
+		err = http.ListenAndServeTLS(cfg.Addr, "cert.pem", "key.pem", r)
+	} else {
+		err = http.ListenAndServe(cfg.Addr, r)
+	}
+
 	logger.Errorf("Server stopped: %v", err)
 }
 
