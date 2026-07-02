@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"log"
 	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 
@@ -27,6 +28,39 @@ func TestSelectStorage_DB(t *testing.T) {
 		t.Fatal("expected storage")
 	}
 	os.Remove("tmp")
+}
+
+func TestSelectStorage_File(t *testing.T) {
+	dir := t.TempDir()
+
+	cfg := config.Config{
+		FileStoragePath: filepath.Join(dir, "storage.json"),
+	}
+
+	storage, err := selectStorage(cfg, nil)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if storage == nil {
+		t.Fatal("expected storage")
+	}
+
+	defer storage.Close()
+}
+
+func TestSelectStorage_OpenError(t *testing.T) {
+	cfg := config.Config{
+		FileStoragePath: "/not/existing/path/storage.json",
+	}
+
+	storage, err := selectStorage(cfg, nil)
+
+	if err == nil {
+		t.Fatal("expected error")
+	}
+	if storage != nil {
+		t.Fatal("expected nil storage")
+	}
 }
 
 func TestPrintBuildInfo(t *testing.T) {

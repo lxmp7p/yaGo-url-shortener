@@ -114,3 +114,116 @@ func TestDispatcher_NilSafe(t *testing.T) {
 		URL:    "/",
 	})
 }
+
+func TestDispatcher_MultipleObservers(t *testing.T) {
+	d := &Dispatcher{}
+
+	m1 := &mockObserver{}
+	m2 := &mockObserver{}
+
+	d.Register(m1)
+	d.Register(m2)
+
+	event := AuditEvent{TS: 1, Action: "multi", URL: "/x"}
+
+	d.Notify(event)
+
+	if !m1.called || !m2.called {
+		t.Fatal("expected all observers to be called")
+	}
+}
+
+func TestDispatcher_Unregister_NonExisting(t *testing.T) {
+	d := &Dispatcher{}
+
+	m1 := &mockObserver{}
+	m2 := &mockObserver{}
+
+	d.Register(m1)
+	d.Unregister(m2)
+	if len(d.observers) != 1 {
+		t.Fatal("unexpected observers slice mutation")
+	}
+}
+
+func TestDispatcher_Close_FileObserver(t *testing.T) {
+	tmpFile, err := os.CreateTemp("", "audit-close")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	f := &FileObserver{File: tmpFile}
+
+	d := &Dispatcher{}
+	d.Register(f)
+
+	err = d.Close()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	_, err = tmpFile.WriteString("x")
+	if err == nil {
+		t.Fatal("expected write to closed file to fail")
+	}
+}
+
+func TestDispatcher_ConcurrentNotify(t *testing.T) {
+	d := &Dispatcher{}
+
+	m := &mockObserver{}
+	d.Register(m)
+
+	event := AuditEvent{TS: 1, Action: "concurrent", URL: "/x"}
+
+	done := make(chan struct{})
+
+	for i := 0; i < 50; i++ {
+		go func() {
+			d.Notify(event)
+			done <- struct{}{}
+		}()
+	}
+
+	for i := 0; i < 50; i++ {
+		<-done
+	}
+
+	if !m.called {
+		t.Fatal("expected observer to be called under concurrency")
+	}
+}
+
+func TestFileObserver_ConcurrentWrites(t *testing.T) {
+	tmpFile, err := os.CreateTemp("", "audit-concurrent")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer os.Remove(tmpFile.Name())
+
+	f := &FileObserver{File: tmpFile}
+
+	event := AuditEvent{TS: 1, Action: "c", URL: "/x"}
+
+	done := make(chan struct{})
+
+	for i := 0; i < 30; i++ {
+		go func() {
+			f.Notify(event)
+			done <- struct{}{}
+		}()
+	}
+
+	for i := 0; i < 30; i++ {
+		<-done
+	}
+
+	data, err := os.ReadFile(tmpFile.Name())
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if len(data) == 0 {
+		t.Fatal("expected concurrent writes to persist data")
+	}
+}
