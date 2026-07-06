@@ -76,9 +76,8 @@ func (cfg *Config) argsConfigurator() {
 	flag.StringVar(&cfg.FileStoragePath, "f", cfg.FileStoragePath, "storage path")
 	flag.StringVar(&cfg.DatabaseDsn, "d", cfg.DatabaseDsn, "database dsn")
 
-	fileLogging := flag.String("audit-file", "", "")
-	remoteLogging := flag.String("audit-url", "", "")
-
+	fileLogging := flag.String("audit-file", "", "file logging path")
+	remoteLogging := flag.String("audit-url", "", "remote logging url")
 	flag.BoolVar(&cfg.EnableHTTPS, "s", cfg.EnableHTTPS, "enable https")
 
 	flag.Parse()
@@ -93,9 +92,7 @@ func (cfg *Config) argsConfigurator() {
 }
 
 func (cfg *Config) envConfigurator() {
-	if configPath := os.Getenv("CONFIG"); configPath != "" {
-		cfg.loadConfig(configPath)
-	}
+
 	if envAddr := os.Getenv("SERVER_ADDRESS"); envAddr != "" {
 		cfg.Addr = envAddr
 	}
@@ -147,8 +144,9 @@ func (cfg *Config) loadConfig(path string) error {
 	if fc.DatabaseDsn != "" {
 		cfg.DatabaseDsn = fc.DatabaseDsn
 	}
-
-	cfg.EnableHTTPS = fc.EnableHTTPS
+	if fc.EnableHTTPS {
+		cfg.EnableHTTPS = fc.EnableHTTPS
+	}
 
 	return nil
 }

@@ -105,6 +105,10 @@ func main() {
 		logger.Errorf("server shutdown error: %v", err)
 	}
 
+	if err := storage.Close(); err != nil {
+		logger.Errorf("storage close error: %v", err)
+	}
+
 	logger.Info("Server stopped")
 }
 
