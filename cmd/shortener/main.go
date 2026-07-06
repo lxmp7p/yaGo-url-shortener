@@ -37,7 +37,6 @@ func main() {
 	}()
 	cfg := config.NewConfig()
 	cfg.InitConfig()
-
 	logger := logrus.New()
 
 	database, err := db.InitDB(cfg, logger)
