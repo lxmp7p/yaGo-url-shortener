@@ -108,6 +108,10 @@ func main() {
 		logger.Errorf("storage close error: %v", err)
 	}
 
+	if err := dispatcher.Close(); err != nil {
+		logger.Errorf("dispatcher close error: %v", err)
+	}
+
 	logger.Info("Server stopped")
 }
 
