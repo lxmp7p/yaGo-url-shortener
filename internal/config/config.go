@@ -7,6 +7,7 @@ import (
 	"log"
 	"os"
 	"strconv"
+	"strings"
 )
 
 // generate:reset
@@ -58,7 +59,15 @@ func (cfg *Config) InitConfig() Config {
 	fs := flag.NewFlagSet(os.Args[0], flag.ExitOnError)
 	cfg.registerFlags(fs, &cli)
 
-	if err := fs.Parse(os.Args[1:]); err != nil {
+	args := make([]string, 0, len(os.Args)-1)
+	for _, arg := range os.Args[1:] {
+		if strings.HasPrefix(arg, "-test.") {
+			continue
+		}
+		args = append(args, arg)
+	}
+
+	if err := fs.Parse(args); err != nil {
 		log.Fatal(err)
 	}
 

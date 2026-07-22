@@ -12,7 +12,7 @@ import (
 	"google.golang.org/protobuf/types/known/emptypb"
 )
 
-// Server — gRPC-фасад над бизнес-логикой ShortenerService.
+// Server - gRPC-фасад над бизнес-логикой ShortenerService.
 type Server struct {
 	shortener.UnimplementedShortenerServiceServer
 	Service *service.ShortenerService

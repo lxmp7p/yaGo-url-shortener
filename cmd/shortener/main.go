@@ -70,7 +70,6 @@ func main() {
 		Dispatcher: dispatcher,
 	})
 
-	// --- gRPC ---
 	grpcShortenerService := &service.ShortenerService{
 		Config:     cfg,
 		Storage:    storage,
