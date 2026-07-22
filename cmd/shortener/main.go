@@ -6,6 +6,9 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"os/signal"
+	"syscall"
+	"time"
 
 	"github.com/lxmp7p/yaGo-url-shortener/internal/config"
 	"github.com/lxmp7p/yaGo-url-shortener/internal/config/db"
@@ -34,7 +37,6 @@ func main() {
 	}()
 	cfg := config.NewConfig()
 	cfg.InitConfig()
-
 	logger := logrus.New()
 
 	database, err := db.InitDB(cfg, logger)
@@ -63,9 +65,54 @@ func main() {
 		Dispatcher: dispatcher,
 	})
 
-	logger.Infof("Starting server on %s", cfg.Addr)
-	err = http.ListenAndServe(cfg.Addr, r)
-	logger.Errorf("Server stopped: %v", err)
+	srv := &http.Server{
+		Addr:    cfg.Addr,
+		Handler: r,
+	}
+
+	go func() {
+		logger.Infof("Starting server on %s", cfg.Addr)
+
+		var err error
+		if cfg.EnableHTTPS {
+			err = srv.ListenAndServeTLS("cert.pem", "key.pem")
+		} else {
+			err = srv.ListenAndServe()
+		}
+
+		if err != nil && err != http.ErrServerClosed {
+			logger.Fatalf("server error: %v", err)
+		}
+	}()
+
+	ctx, stop := signal.NotifyContext(
+		context.Background(),
+		syscall.SIGINT,
+		syscall.SIGTERM,
+		syscall.SIGQUIT,
+	)
+	defer stop()
+
+	<-ctx.Done()
+
+	logger.Info("Shutdown signal received")
+
+	shutdownCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	if err := srv.Shutdown(shutdownCtx); err != nil {
+		logger.Errorf("server shutdown error: %v", err)
+	}
+
+	if err := storage.Close(); err != nil {
+		logger.Errorf("storage close error: %v", err)
+	}
+
+	if err := dispatcher.Close(); err != nil {
+		logger.Errorf("dispatcher close error: %v", err)
+	}
+
+	logger.Info("Server stopped")
 }
 
 func selectStorage(cfg config.Config, database *sql.DB) (service.URLstorage, error) {
