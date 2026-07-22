@@ -27,6 +27,9 @@ const (
 	Chars             = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 )
 
+// ErrEmptyURL возвращается, если на вход передан пустой URL
+var ErrEmptyURL = errors.New("URL empty")
+
 // generate:reset
 type DeleteTask struct {
 	UserID string
@@ -163,8 +166,6 @@ func (s *ShortenerService) CreateShortURLApi(w http.ResponseWriter, r *http.Requ
 	}
 
 	var shortenRequest ShortenRequest
-	status := http.StatusCreated
-
 	if err := json.NewDecoder(r.Body).Decode(&shortenRequest); err != nil {
 		http.Error(w, "Invalid JSON", http.StatusBadRequest)
 		return
@@ -175,36 +176,17 @@ func (s *ShortenerService) CreateShortURLApi(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	var shortURL string
-	for attempt := 0; attempt < MaxShortAttempts; attempt++ {
-		shortURL = generateShortURL()
-		err := s.Storage.Save(r.Context(), string(shortenRequest.URL), shortURL, userID)
-		if err != nil {
-			var URLErr *repository.URLError
-			if errors.As(err, &URLErr) {
-				w.Header().Set("Content-Type", "application/json")
-				status = http.StatusConflict
-				shortURL = URLErr.Short
-				err = nil
-				break
-			}
-			continue
-		}
-		break
-	}
-
-	shortURL, err := url.JoinPath(s.Config.ResultAddr, shortURL)
+	shortURL, conflict, err := s.ShortenURL(r.Context(), shortenRequest.URL, userID)
 	if err != nil {
-		http.Error(w, "failed to generate URL", http.StatusBadRequest)
+		slog.Error(err.Error())
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}
 
-	s.Dispatcher.Notify(logger.AuditEvent{
-		TS:     time.Now().Unix(),
-		Action: "shorten",
-		UserID: userID,
-		URL:    string(shortenRequest.URL),
-	})
+	status := http.StatusCreated
+	if conflict {
+		status = http.StatusConflict
+	}
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
@@ -220,7 +202,7 @@ func (s *ShortenerService) GetOriginalURL(w http.ResponseWriter, r *http.Request
 	}
 
 	shortURL := chi.URLParam(r, "short_url")
-	originalURL, err := s.Storage.Get(r.Context(), shortURL)
+	originalURL, err := s.ExpandURL(r.Context(), shortURL, userID)
 	if err != nil {
 		slog.Error(err.Error())
 		if errors.Is(err, repository.ErrURLDeleted) {
@@ -230,13 +212,6 @@ func (s *ShortenerService) GetOriginalURL(w http.ResponseWriter, r *http.Request
 		http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
 		return
 	}
-
-	s.Dispatcher.Notify(logger.AuditEvent{
-		TS:     time.Now().Unix(),
-		Action: "shorten",
-		UserID: userID,
-		URL:    originalURL,
-	})
 
 	w.Header().Set("Location", originalURL)
 	w.WriteHeader(http.StatusTemporaryRedirect)
@@ -317,18 +292,11 @@ func (s *ShortenerService) GetUsersURLs(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	URLs, err := s.Storage.GetByUserID(r.Context(), userID)
+	URLs, err := s.ListUserURLs(r.Context(), userID)
 	if err != nil {
 		slog.Error(err.Error())
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
-	}
-
-	for i, u := range URLs {
-		shortURL, err := url.JoinPath(s.Config.ResultAddr, u.Short)
-		if err == nil {
-			URLs[i].Short = shortURL
-		}
 	}
 
 	if len(URLs) == 0 {
@@ -384,4 +352,81 @@ func (s *ShortenerService) StartDeleteWorker() {
 			}
 		}
 	}()
+}
+
+// ShortenURL - бизнес-логика создания короткой ссылки.
+// Используется как HTTP, так и gRPC хендлерами.
+func (s *ShortenerService) ShortenURL(ctx context.Context, originalURL, userID string) (shortURL string, conflict bool, err error) {
+	if originalURL == "" {
+		return "", false, ErrEmptyURL
+	}
+
+	for attempt := 0; attempt < MaxShortAttempts; attempt++ {
+		shortURL = generateShortURL()
+		err = s.Storage.Save(ctx, originalURL, shortURL, userID)
+		if err != nil {
+			var URLErr *repository.URLError
+			if errors.As(err, &URLErr) {
+				shortURL = URLErr.Short
+				err = nil
+				conflict = true
+				break
+			}
+			continue
+		}
+		break
+	}
+
+	if err != nil {
+		return "", false, err
+	}
+
+	shortURL, err = url.JoinPath(s.Config.ResultAddr, shortURL)
+	if err != nil {
+		return "", false, err
+	}
+
+	s.Dispatcher.Notify(logger.AuditEvent{
+		TS:     time.Now().Unix(),
+		Action: "shorten",
+		UserID: userID,
+		URL:    originalURL,
+	})
+
+	return shortURL, conflict, nil
+}
+
+// ExpandURL - бизнес-логика получения оригинального URL по короткому идентификатору.
+func (s *ShortenerService) ExpandURL(ctx context.Context, shortURL, userID string) (originalURL string, err error) {
+	originalURL, err = s.Storage.Get(ctx, shortURL)
+	if err != nil {
+		return "", err
+	}
+
+	s.Dispatcher.Notify(logger.AuditEvent{
+		TS:     time.Now().Unix(),
+		Action: "shorten",
+		UserID: userID,
+		URL:    originalURL,
+	})
+
+	return originalURL, nil
+}
+
+// ListUserURLs - бизнес-логика получения всех ссылок пользователя,
+// с уже подставленным базовым адресом в short_url.
+func (s *ShortenerService) ListUserURLs(ctx context.Context, userID string) ([]repository.URL, error) {
+	urls, err := s.Storage.GetByUserID(ctx, userID)
+	if err != nil {
+		return nil, err
+	}
+
+	for i, u := range urls {
+		shortURL, err := url.JoinPath(s.Config.ResultAddr, u.Short)
+		if err == nil {
+			urls[i].Short = shortURL
+		}
+	}
+
+	return urls, nil
 }
