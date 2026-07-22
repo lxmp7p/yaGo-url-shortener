@@ -33,6 +33,22 @@ func (e *URLError) Error() string {
 	return ErrOriginalURLExists.Error()
 }
 
+// Возвращает количество сохранённых URL и уникальных пользователей
+func (cache *DatabaseCache) Stats(ctx context.Context) (int, int, error) {
+	var urls int
+	if err := cache.db.QueryRowContext(ctx, "SELECT COUNT(*) FROM urls").Scan(&urls); err != nil {
+		return 0, 0, err
+	}
+
+	var users int
+	query := "SELECT COUNT(DISTINCT owner_id) FROM urls"
+	if err := cache.db.QueryRowContext(ctx, query).Scan(&users); err != nil {
+		return 0, 0, err
+	}
+
+	return urls, users, nil
+}
+
 func (cache *DatabaseCache) Save(ctx context.Context, originalURL, shortURL string, userID string) error {
 	query := `
 	INSERT INTO urls (id, original, short, owner_id) 

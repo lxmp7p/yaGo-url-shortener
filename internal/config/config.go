@@ -16,6 +16,7 @@ type Config struct {
 	FileStoragePath string `json:"file_storage_path"`
 	DatabaseDsn     string `json:"database_dsn"`
 	EnableHTTPS     bool   `json:"enable_https"`
+	TrustedSubnet   string `json:"trusted_subnet"`
 	FileLogging     LoggerInfo
 	RemoteLogging   LoggerInfo
 }
@@ -33,6 +34,7 @@ type cliFlags struct {
 	FileStoragePath  string
 	DatabaseDsn      string
 	EnableHTTPS      bool
+	TrustedSubnet    string
 	FileLoggingPath  string
 	RemoteLoggingURL string
 }
@@ -90,6 +92,7 @@ func (cfg *Config) registerFlags(fs *flag.FlagSet, cli *cliFlags) {
 	fs.StringVar(&cli.FileStoragePath, "f", "", "storage path")
 	fs.StringVar(&cli.DatabaseDsn, "d", "", "database dsn")
 	fs.BoolVar(&cli.EnableHTTPS, "s", false, "enable https")
+	fs.StringVar(&cli.TrustedSubnet, "t", "", "trusted subnet CIDR")
 
 	fs.StringVar(&cli.FileLoggingPath, "audit-file", "", "file logging path")
 	fs.StringVar(&cli.RemoteLoggingURL, "audit-url", "", "remote logging url")
@@ -108,6 +111,8 @@ func (cfg *Config) applyFlags(fs *flag.FlagSet, cli *cliFlags) {
 			cfg.DatabaseDsn = cli.DatabaseDsn
 		case "s":
 			cfg.EnableHTTPS = cli.EnableHTTPS
+		case "t":
+			cfg.TrustedSubnet = cli.TrustedSubnet
 		case "audit-file":
 			cfg.FileLogging.setPath(cli.FileLoggingPath)
 		case "audit-url":
@@ -144,6 +149,10 @@ func (cfg *Config) envConfigurator() error {
 		cfg.EnableHTTPS = enableHTTPS
 	}
 
+	if envTrustedSubnet := os.Getenv("TRUSTED_SUBNET"); envTrustedSubnet != "" {
+		cfg.TrustedSubnet = envTrustedSubnet
+	}
+
 	return nil
 }
 
@@ -172,6 +181,10 @@ func (cfg *Config) loadConfig(path string) error {
 	}
 
 	cfg.EnableHTTPS = fc.EnableHTTPS
+
+	if fc.TrustedSubnet != "" {
+		cfg.TrustedSubnet = fc.TrustedSubnet
+	}
 
 	return nil
 }

@@ -86,6 +86,10 @@ func (m *storageMock) Delete(ctx context.Context, userID string, IDs []string) e
 	return nil
 }
 
+func (m *storageMock) Stats(ctx context.Context) (urls int, users int, err error) {
+	return 0, 0, nil
+}
+
 func (m *storageMock) Close() error {
 	return nil
 }
@@ -230,6 +234,11 @@ func (m *storageGetMock) GetByUserID(ctx context.Context, userID string) ([]repo
 func (m *storageGetMock) Delete(ctx context.Context, userID string, ids []string) error {
 	return nil
 }
+
+func (m *storageGetMock) Stats(ctx context.Context) (urls int, users int, err error) {
+	return 0, 0, nil
+}
+
 func (m *storageGetMock) Close() error { return nil }
 
 type routeCtxKey struct{}
@@ -349,6 +358,11 @@ func (m *storageCreateMock) GetByUserID(ctx context.Context, u string) ([]reposi
 func (m *storageCreateMock) Delete(ctx context.Context, u string, ids []string) error {
 	return nil
 }
+
+func (m *storageCreateMock) Stats(ctx context.Context) (urls int, users int, err error) {
+	return 0, 0, nil
+}
+
 func (m *storageCreateMock) Close() error { return nil }
 
 func TestCreateShortURL(t *testing.T) {
