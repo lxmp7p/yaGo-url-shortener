@@ -16,6 +16,9 @@ func ShortenerRoutes(shortenerService *service.ShortenerService) chi.Router {
 	r.Get("/api/user/urls", shortenerService.GetUsersURLs)
 	r.Delete("/api/user/urls", shortenerService.DeleteUsersURLs)
 
+	r.With(TrustedSubnetMiddleware(shortenerService.Config.TrustedSubnet)).
+		Get("/api/internal/stats", shortenerService.GetStats)
+
 	r.Get("/ping", shortenerService.PingDatabase)
 	return r
 }

@@ -4,6 +4,7 @@ import (
 	"compress/gzip"
 	"context"
 	"fmt"
+	"net"
 	"net/http"
 	"strings"
 	"time"
@@ -139,4 +140,33 @@ func (h *Handler) AuthMiddleware(next http.Handler) http.Handler {
 		ctx := context.WithValue(r.Context(), userIDCtx, userID)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
+}
+
+// TrustedSubnetMiddleware проверяет, что IP-адрес из заголовка X-Real-IP
+// входит в доверенную подсеть trustedSubnet. Если подсеть не задана -
+// доступ запрещён для всех запросов.
+func TrustedSubnetMiddleware(trustedSubnet string) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			if trustedSubnet == "" {
+				http.Error(w, http.StatusText(http.StatusForbidden), http.StatusForbidden)
+				return
+			}
+
+			_, ipNet, err := net.ParseCIDR(trustedSubnet)
+			if err != nil {
+				http.Error(w, http.StatusText(http.StatusForbidden), http.StatusForbidden)
+				return
+			}
+
+			realIP := r.Header.Get("X-Real-IP")
+			ip := net.ParseIP(realIP)
+			if ip == nil || !ipNet.Contains(ip) {
+				http.Error(w, http.StatusText(http.StatusForbidden), http.StatusForbidden)
+				return
+			}
+
+			next.ServeHTTP(w, r)
+		})
+	}
 }

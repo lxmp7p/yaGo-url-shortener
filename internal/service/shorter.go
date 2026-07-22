@@ -33,12 +33,19 @@ type DeleteTask struct {
 	IDs    []string
 }
 
+// generate:reset
+type StatsResponse struct {
+	URLs  int `json:"urls"`
+	Users int `json:"users"`
+}
+
 // Интерфейс для реализации функционала сокращения ссылок
 type URLstorage interface {
 	Save(ctx context.Context, originalURL string, shortURL string, userID string) error
 	Get(ctx context.Context, shortURL string) (string, error)
 	GetByUserID(ctx context.Context, userID string) ([]repository.URL, error)
 	Delete(ctx context.Context, userID string, IDs []string) error
+	Stats(ctx context.Context) (urls int, users int, err error)
 	Close() error
 }
 
@@ -81,6 +88,18 @@ type Original struct {
 type Shorten struct {
 	ID       string `json:"correlation_id"`
 	ShortURL string `json:"short_url"`
+}
+
+func (s *ShortenerService) GetStats(w http.ResponseWriter, r *http.Request) {
+	urls, users, err := s.Storage.Stats(r.Context())
+	if err != nil {
+		slog.Error(err.Error())
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set(ContentTypeHeader, "application/json")
+	json.NewEncoder(w).Encode(StatsResponse{URLs: urls, Users: users})
 }
 
 // Получает на вход список из ссылок и для каждой формирует ShortUrl
