@@ -146,6 +146,7 @@ func (h *Handler) AuthMiddleware(next http.Handler) http.Handler {
 // входит в доверенную подсеть trustedSubnet. Если подсеть не задана -
 // доступ запрещён для всех запросов.
 func TrustedSubnetMiddleware(trustedSubnet string) func(http.Handler) http.Handler {
+	_, ipNet, err := net.ParseCIDR(trustedSubnet)
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			if trustedSubnet == "" {
@@ -153,7 +154,6 @@ func TrustedSubnetMiddleware(trustedSubnet string) func(http.Handler) http.Handl
 				return
 			}
 
-			_, ipNet, err := net.ParseCIDR(trustedSubnet)
 			if err != nil {
 				http.Error(w, http.StatusText(http.StatusForbidden), http.StatusForbidden)
 				return

@@ -9,7 +9,6 @@ import (
 	"github.com/lxmp7p/yaGo-url-shortener/proto/shortener"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"google.golang.org/protobuf/types/known/emptypb"
 )
 
 // Server - gRPC-фасад над бизнес-логикой ShortenerService.
@@ -66,7 +65,7 @@ func (s *Server) ExpandURL(ctx context.Context, req *shortener.URLExpandRequest)
 	return &shortener.URLExpandResponse{Result: original}, nil
 }
 
-func (s *Server) ListUserURLs(ctx context.Context, _ *emptypb.Empty) (*shortener.UserURLsResponse, error) {
+func (s *Server) ListUserURLs(ctx context.Context, _ *shortener.ListUserURLsRequest) (*shortener.UserURLsResponse, error) {
 	userID, ok := UserIDFromContext(ctx)
 	if !ok {
 		return nil, status.Error(codes.Unauthenticated, "unauthenticated")
