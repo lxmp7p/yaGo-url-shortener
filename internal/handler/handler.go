@@ -25,11 +25,12 @@ func NewHandler(s *service.ShortenerService) *Handler {
 // Структура приложения хранящая все необходимые ресурсы, для запуска сервиса
 // generate:reset
 type App struct {
-	Config     config.Config
-	Storage    service.URLstorage
-	Logger     *logrus.Logger
-	Database   *sql.DB
-	Dispatcher *logger.Dispatcher
+	Config           config.Config
+	Storage          service.URLstorage
+	Logger           *logrus.Logger
+	Database         *sql.DB
+	Dispatcher       *logger.Dispatcher
+	ShortenerService *service.ShortenerService
 }
 
 // Создает сервис shortenerService, запускает воркер для удаления,
@@ -37,23 +38,14 @@ type App struct {
 func InitRoutes(app App) chi.Router {
 	app.validateApp()
 
-	shortenerService := &service.ShortenerService{
-		Config:     app.Config,
-		Storage:    app.Storage,
-		Database:   app.Database,
-		DeleteCh:   make(chan service.DeleteTask, 1),
-		Dispatcher: app.Dispatcher,
-	}
-	shortenerService.StartDeleteWorker()
-
-	handler := NewHandler(shortenerService)
+	handler := NewHandler(app.ShortenerService)
 
 	apiRouter := chi.NewRouter()
 	apiRouter.Use(CompressMiddleware())
 	apiRouter.Use(LoggingMiddleware(app.Logger))
 	apiRouter.Use(handler.AuthMiddleware)
 
-	apiRouter.Mount("/", ShortenerRoutes(shortenerService))
+	apiRouter.Mount("/", ShortenerRoutes(app.ShortenerService))
 	return apiRouter
 }
 

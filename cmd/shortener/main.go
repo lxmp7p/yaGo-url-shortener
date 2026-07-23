@@ -2,8 +2,10 @@ package main
 
 import (
 	"context"
+	"crypto/tls"
 	"database/sql"
 	"log"
+	"net"
 	"net/http"
 	"os"
 	"os/signal"
@@ -15,6 +17,11 @@ import (
 	logs "github.com/lxmp7p/yaGo-url-shortener/internal/logger"
 	"github.com/lxmp7p/yaGo-url-shortener/internal/repository"
 	"github.com/lxmp7p/yaGo-url-shortener/internal/service"
+	"github.com/lxmp7p/yaGo-url-shortener/proto/shortener"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
+
+	"github.com/lxmp7p/yaGo-url-shortener/internal/grpcserver"
 
 	_ "net/http/pprof"
 
@@ -57,13 +64,55 @@ func main() {
 	}
 	defer dispatcher.Close()
 
-	r := handler.InitRoutes(handler.App{
+	shortenerService := &service.ShortenerService{
 		Config:     cfg,
 		Storage:    storage,
-		Logger:     logger,
 		Database:   database,
+		DeleteCh:   make(chan service.DeleteTask, 1),
 		Dispatcher: dispatcher,
+	}
+
+	shortenerService.StartDeleteWorker()
+
+	r := handler.InitRoutes(handler.App{
+		Config:           cfg,
+		Storage:          storage,
+		Logger:           logger,
+		Database:         database,
+		Dispatcher:       dispatcher,
+		ShortenerService: shortenerService,
 	})
+
+	cert, err := tls.LoadX509KeyPair("cert.pem", "key.pem")
+	if err != nil {
+		logger.Fatalf("failed to load TLS certificate: %v", err)
+	}
+
+	authInterceptor := grpcserver.NewAuthInterceptor(shortenerService)
+
+	grpcCreds := credentials.NewTLS(&tls.Config{
+		Certificates: []tls.Certificate{cert},
+		MinVersion:   tls.VersionTLS12,
+	})
+
+	grpcServer := grpc.NewServer(
+		grpc.Creds(grpcCreds),
+		grpc.UnaryInterceptor(authInterceptor.Unary),
+	)
+
+	shortener.RegisterShortenerServiceServer(grpcServer, grpcserver.NewServer(shortenerService))
+
+	grpcListener, err := net.Listen("tcp", cfg.GRPCAddr)
+	if err != nil {
+		logger.Fatalf("grpc listen error: %v", err)
+	}
+
+	go func() {
+		logger.Infof("Starting gRPC server on %s", cfg.GRPCAddr)
+		if err := grpcServer.Serve(grpcListener); err != nil {
+			logger.Errorf("grpc server error: %v", err)
+		}
+	}()
 
 	srv := &http.Server{
 		Addr:    cfg.Addr,

@@ -51,6 +51,21 @@ func (cache *Cache) Close() error {
 	return cache.file.Close()
 }
 
+// Возвращает количество сохранённых URL и уникальных пользователей
+func (cache *Cache) Stats(ctx context.Context) (int, int, error) {
+	cache.mu.RLock()
+	defer cache.mu.RUnlock()
+
+	urls := len(cache.URLCache)
+
+	users := make(map[string]struct{})
+	for _, v := range cache.URLCache {
+		users[v.UserID] = struct{}{}
+	}
+
+	return urls, len(users), nil
+}
+
 // Проверяет наличие shortURL в кэше и в случае отсутствия, добавляет
 // новое значение URL{} в кэш
 func (cache *Cache) Save(ctx context.Context, originalURL, shortURL, userID string) error {

@@ -7,6 +7,7 @@ import (
 	"log"
 	"os"
 	"strconv"
+	"strings"
 )
 
 // generate:reset
@@ -16,6 +17,8 @@ type Config struct {
 	FileStoragePath string `json:"file_storage_path"`
 	DatabaseDsn     string `json:"database_dsn"`
 	EnableHTTPS     bool   `json:"enable_https"`
+	TrustedSubnet   string `json:"trusted_subnet"`
+	GRPCAddr        string `json:"grpc_address"`
 	FileLogging     LoggerInfo
 	RemoteLogging   LoggerInfo
 }
@@ -33,6 +36,8 @@ type cliFlags struct {
 	FileStoragePath  string
 	DatabaseDsn      string
 	EnableHTTPS      bool
+	TrustedSubnet    string
+	GRPCAddr         string
 	FileLoggingPath  string
 	RemoteLoggingURL string
 }
@@ -54,7 +59,15 @@ func (cfg *Config) InitConfig() Config {
 	fs := flag.NewFlagSet(os.Args[0], flag.ExitOnError)
 	cfg.registerFlags(fs, &cli)
 
-	if err := fs.Parse(os.Args[1:]); err != nil {
+	args := make([]string, 0, len(os.Args)-1)
+	for _, arg := range os.Args[1:] {
+		if strings.HasPrefix(arg, "-test.") {
+			continue
+		}
+		args = append(args, arg)
+	}
+
+	if err := fs.Parse(args); err != nil {
 		log.Fatal(err)
 	}
 
@@ -77,6 +90,7 @@ func (cfg *Config) setDefaults() {
 	cfg.Addr = "localhost:8080"
 	cfg.ResultAddr = "http://localhost:8080"
 	cfg.FileStoragePath = "storageFile"
+	cfg.GRPCAddr = "localhost:3200"
 }
 
 func (cfg *Config) registerFlags(fs *flag.FlagSet, cli *cliFlags) {
@@ -90,6 +104,8 @@ func (cfg *Config) registerFlags(fs *flag.FlagSet, cli *cliFlags) {
 	fs.StringVar(&cli.FileStoragePath, "f", "", "storage path")
 	fs.StringVar(&cli.DatabaseDsn, "d", "", "database dsn")
 	fs.BoolVar(&cli.EnableHTTPS, "s", false, "enable https")
+	fs.StringVar(&cli.TrustedSubnet, "t", "", "trusted subnet CIDR")
+	fs.StringVar(&cli.GRPCAddr, "g", "", "grpc server address")
 
 	fs.StringVar(&cli.FileLoggingPath, "audit-file", "", "file logging path")
 	fs.StringVar(&cli.RemoteLoggingURL, "audit-url", "", "remote logging url")
@@ -108,6 +124,10 @@ func (cfg *Config) applyFlags(fs *flag.FlagSet, cli *cliFlags) {
 			cfg.DatabaseDsn = cli.DatabaseDsn
 		case "s":
 			cfg.EnableHTTPS = cli.EnableHTTPS
+		case "t":
+			cfg.TrustedSubnet = cli.TrustedSubnet
+		case "g":
+			cfg.GRPCAddr = cli.GRPCAddr
 		case "audit-file":
 			cfg.FileLogging.setPath(cli.FileLoggingPath)
 		case "audit-url":
@@ -144,6 +164,14 @@ func (cfg *Config) envConfigurator() error {
 		cfg.EnableHTTPS = enableHTTPS
 	}
 
+	if envTrustedSubnet := os.Getenv("TRUSTED_SUBNET"); envTrustedSubnet != "" {
+		cfg.TrustedSubnet = envTrustedSubnet
+	}
+
+	if envGRPCAddr := os.Getenv("GRPC_ADDRESS"); envGRPCAddr != "" {
+		cfg.GRPCAddr = envGRPCAddr
+	}
+
 	return nil
 }
 
@@ -172,6 +200,14 @@ func (cfg *Config) loadConfig(path string) error {
 	}
 
 	cfg.EnableHTTPS = fc.EnableHTTPS
+
+	if fc.TrustedSubnet != "" {
+		cfg.TrustedSubnet = fc.TrustedSubnet
+	}
+
+	if fc.GRPCAddr != "" {
+		cfg.GRPCAddr = fc.GRPCAddr
+	}
 
 	return nil
 }
