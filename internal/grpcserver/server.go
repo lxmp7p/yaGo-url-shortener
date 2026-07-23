@@ -37,7 +37,9 @@ func (s *Server) ShortenURL(ctx context.Context, req *shortener.URLShortenReques
 		return nil, status.Error(codes.Internal, "internal error")
 	}
 
-	return &shortener.URLShortenResponse{Result: result}, nil
+	return shortener.URLShortenResponse_builder{
+		Result: result,
+	}.Build(), nil
 }
 
 func (s *Server) ExpandURL(ctx context.Context, req *shortener.URLExpandRequest) (*shortener.URLExpandResponse, error) {
@@ -62,7 +64,9 @@ func (s *Server) ExpandURL(ctx context.Context, req *shortener.URLExpandRequest)
 		return nil, status.Error(codes.Internal, "internal error")
 	}
 
-	return &shortener.URLExpandResponse{Result: original}, nil
+	return shortener.URLExpandResponse_builder{
+		Result: original,
+	}.Build(), nil
 }
 
 func (s *Server) ListUserURLs(ctx context.Context, _ *shortener.ListUserURLsRequest) (*shortener.UserURLsResponse, error) {
@@ -77,13 +81,16 @@ func (s *Server) ListUserURLs(ctx context.Context, _ *shortener.ListUserURLsRequ
 		return nil, status.Error(codes.Internal, "internal error")
 	}
 
-	resp := &shortener.UserURLsResponse{}
+	var items []*shortener.URLData
+
 	for _, u := range urls {
-		resp.Url = append(resp.Url, &shortener.URLData{
+		items = append(items, shortener.URLData_builder{
 			ShortUrl:    u.Short,
 			OriginalUrl: u.Original,
-		})
+		}.Build())
 	}
 
-	return resp, nil
+	return shortener.UserURLsResponse_builder{
+		Url: items,
+	}.Build(), nil
 }
