@@ -34,7 +34,8 @@ func (s *Server) ShortenURL(ctx context.Context, req *shortener.URLShortenReques
 
 	result, _, err := s.Service.ShortenURL(ctx, req.GetUrl(), userID)
 	if err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
+		s.Service.Logger.Error(err.Error())
+		return nil, status.Error(codes.Internal, "internal error")
 	}
 
 	return &shortener.URLShortenResponse{Result: result}, nil
@@ -58,7 +59,8 @@ func (s *Server) ExpandURL(ctx context.Context, req *shortener.URLExpandRequest)
 		if errors.Is(err, repository.ErrURLNotFound) {
 			return nil, status.Error(codes.NotFound, "url not found")
 		}
-		return nil, status.Error(codes.Internal, err.Error())
+		s.Service.Logger.Error(err.Error())
+		return nil, status.Error(codes.Internal, "internal error")
 	}
 
 	return &shortener.URLExpandResponse{Result: original}, nil
@@ -72,7 +74,8 @@ func (s *Server) ListUserURLs(ctx context.Context, _ *emptypb.Empty) (*shortener
 
 	urls, err := s.Service.ListUserURLs(ctx, userID)
 	if err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
+		s.Service.Logger.Error(err.Error())
+		return nil, status.Error(codes.Internal, "internal error")
 	}
 
 	resp := &shortener.UserURLsResponse{}
