@@ -36,7 +36,6 @@ type App struct {
 // создает хэндлер и подключает мидлвари к роуту
 func InitRoutes(app App) chi.Router {
 	app.validateApp()
-
 	shortenerService := &service.ShortenerService{
 		Config:     app.Config,
 		Storage:    app.Storage,
